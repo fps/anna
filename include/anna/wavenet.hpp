@@ -1,7 +1,7 @@
 #pragma once
 
-#include <nn/conv1d.hpp>
-#include <nn/tanh.hpp>
+#include <anna/conv1d.hpp>
+#include <anna/tanh.hpp>
 
 #include <cassert>
 
@@ -50,7 +50,7 @@ namespace anna
     static void go(Layers &layers, Eigen::MatrixBase<Matrix1> const & bottom_input, Eigen::MatrixBase<Matrix2> &head, Eigen::MatrixBase<Matrix3> const & output, const int n)
     {
       std::get<std::tuple_size_v<Layers> - remaining>(layers).process(output, bottom_input, head, output, n);
-      nn::process_wavenet<Layers, remaining-1>::go(layers, bottom_input, head, output, n);
+      anna::process_wavenet<Layers, remaining-1>::go(layers, bottom_input, head, output, n);
     }
   };
   
@@ -97,7 +97,7 @@ namespace anna
       m_output.template leftCols(n).noalias() = m_input_rechannel_weights * input.template leftCols(n);
       
       std::get<0>(m_layers).process(m_output, bottom_input, m_head, m_output, n);
-      nn::process_wavenet<layers_type, std::tuple_size_v<layers_type> - 1>::go(m_layers, bottom_input, m_head, m_output, n);
+      anna::process_wavenet<layers_type, std::tuple_size_v<layers_type> - 1>::go(m_layers, bottom_input, m_head, m_output, n);
       
       m_head_output.template leftCols(n).noalias() = (m_head_rechannel_weights * m_head.template leftCols(n)).colwise() + m_head_rechannel_bias;
     }

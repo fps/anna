@@ -1,4 +1,4 @@
-#include <nn/nn.hpp>
+#include <anna/anna.hpp>
 #include <iostream>
 #include <chrono>
 
@@ -9,34 +9,34 @@
 
 int main()
 {
-  nn::wavenet<
+  anna::wavenet<
     float, buffer_size,
     1, 1,
-    nn::wavenet_block<
+    anna::wavenet_block<
       float, buffer_size, 1, 1, 16, 8,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 16, 1>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 16, 2>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 16, 4>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 16, 8>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 16, 16>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 16, 32>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 16, 64>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 16, 128>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 16, 256>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 16, 512>
+      anna::wavenet_layer<float, buffer_size, 3, 1, 16, 1>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 16, 2>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 16, 4>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 16, 8>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 16, 16>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 16, 32>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 16, 64>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 16, 128>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 16, 256>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 16, 512>
       >,
-    nn::wavenet_block<
+    anna::wavenet_block<
       float, buffer_size, 1, 16, 8, 1,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 8, 1>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 8, 2>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 8, 4>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 8, 8>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 8, 16>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 8, 32>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 8, 64>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 8, 128>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 8, 256>,
-      nn::wavenet_layer<float, buffer_size, 3, 1, 8, 512>
+      anna::wavenet_layer<float, buffer_size, 3, 1, 8, 1>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 8, 2>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 8, 4>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 8, 8>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 8, 16>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 8, 32>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 8, 64>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 8, 128>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 8, 256>,
+      anna::wavenet_layer<float, buffer_size, 3, 1, 8, 512>
       >
     > model;
 
