@@ -1,6 +1,6 @@
 #pragma once
 
-namespace nn {
+namespace anna {
 
   template<typename Matrix>
   auto eigen_fast_tanh(const Eigen::MatrixBase<Matrix> &m)

@@ -5,7 +5,7 @@
 
 #include <cassert>
 
-namespace nn
+namespace anna
 {
   template<typename T, int N, int kernel_size, int bottom_in_channels, int channels, int dilation, bool linear = true>
   struct wavenet_layer

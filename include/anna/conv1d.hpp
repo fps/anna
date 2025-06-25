@@ -4,7 +4,7 @@
 #include <array>
 #include <cassert>
 
-namespace nn
+namespace anna
 {
   template<typename T, int k, int inp, int outp>
   std::array<Eigen::Matrix<T, outp, inp>, k>
