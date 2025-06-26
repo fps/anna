@@ -4,6 +4,6 @@ CXXFLAGS = -std=c++20 -Wall -O3 -DEIGEN_STACK_ALLOCATION_LIMIT=0 -DNDEBUG -DEIGE
 
 .PHONY: all
 
-all: examples/wavenet
+all: examples/wavenet examples/seq examples/inplace_sequence
 
 examples/wavenet: examples/wavenet.cpp
