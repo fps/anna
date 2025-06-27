@@ -1,5 +1,4 @@
-
-#include <anna/seq.hpp>
+#include <anna/sequence.hpp>
 #include <iostream>
 
 struct f

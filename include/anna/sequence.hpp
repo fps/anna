@@ -53,7 +53,6 @@ namespace anna
 
   namespace sequence
   {
-    /*
     namespace input_output
     {
       template<typename Layers, int remaining>
@@ -90,7 +89,7 @@ namespace anna
         }
       };
     } // namespace binary
-    */
+
 
     namespace iterated
     {
