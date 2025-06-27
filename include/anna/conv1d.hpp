@@ -108,6 +108,20 @@ namespace anna
         const_cast<Eigen::MatrixBase<Matrix2>&>(output).template leftCols(n).colwise() += m_bias;
       }
     }
+
+    template <typename Matrix>
+    inline void process_inplace(Eigen::MatrixBase<Matrix> const & input, const int n)
+    {
+      process(input, input, n);
+    }
+
+    template <typename Matrix>
+    inline auto process(Eigen::MatrixBase<Matrix> const & input, const int n)
+    {
+      Eigen::Matrix<T, out_channels, N> ret;
+      process(input, ret, n);
+      return ret;
+    }
   };
   
 } // namespace nn

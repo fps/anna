@@ -131,4 +131,40 @@ namespace anna
     }
   };
 
+  template<typename T, int N, int in_channels, int channels, int dilation>
+  struct nam_wavenet_direct_layer
+  {
+    conv1d<T, N, channels, channels, true, 1> m_conv1_1;
+    Eigen::Matrix<T, channels, in_channels> m_input_mixer_weights;
+    Eigen::Matrix<T, channels, channels> m_linear_weights;
+    Eigen::Vector<T, channels> m_linear_bias;
+  };
+  
+  template<typename T, int N, int in_channels, int out_channels>
+  struct nam_wavenet_direct
+  {
+    // Eigen::Matrix<T, 16, N> m_head1;
+    
+    Eigen::Matrix<T, 16, in_channels> m_rechannel1_weights;
+    nam_wavenet_direct_layer<T, N, in_channels, 16, 1> m_layer1_1;
+    nam_wavenet_direct_layer<T, N, in_channels, 16, 2> m_layer1_2;
+    nam_wavenet_direct_layer<T, N, in_channels, 16, 4> m_layer1_3;
+    nam_wavenet_direct_layer<T, N, in_channels, 16, 8> m_layer1_4;
+    nam_wavenet_direct_layer<T, N, in_channels, 16, 16> m_layer1_5;
+    nam_wavenet_direct_layer<T, N, in_channels, 16, 32> m_layer1_6;
+    nam_wavenet_direct_layer<T, N, in_channels, 16, 64> m_layer1_7;
+    nam_wavenet_direct_layer<T, N, in_channels, 16, 128> m_layer1_8;
+    nam_wavenet_direct_layer<T, N, in_channels, 16, 256> m_layer1_9;
+    nam_wavenet_direct_layer<T, N, in_channels, 16, 512> m_layer1_10;
+    Eigen::Matrix<T, 8, 16> m_head_rechannel1_weights;
+
+    template<typename Matrix>
+    inline auto process(Eigen::MatrixBase<Matrix> const & input, const int n)
+    {
+      Eigen::Matrix<T, 16, N> head1;
+      head1.setZero();
+      
+    }
+  };
+  
 } // namespace nn

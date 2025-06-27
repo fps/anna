@@ -108,5 +108,5 @@ int main()
   // model.get_output<41, float, buffer_size, 1>(output);
   // std::cout << output << "\n";
   // std::cout << model.get_nth_output<41, float, buffer_size, 1>() << "\n";
-  std::cout << model.get_output<float, buffer_size, 1>() << "\n";
+  std::cout << output << "\n";
 }
