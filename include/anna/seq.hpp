@@ -53,6 +53,89 @@ namespace anna
 
   namespace sequence
   {
+    /*
+    namespace input_output
+    {
+      template<typename Layers, int remaining>
+      struct processor
+      {
+        template<typename Matrix, typename Matrix2>
+        static void process(Layers & layers, Eigen::MatrixBase<Matrix> const &input, Eigen::MatrixBase<Matrix2> const &output, const int n)
+        {
+          std::get<std::tuple_size_v<Layers> - remaining>(layers).process_inplace(input, output, n);
+          input = output;
+          processor<Layers, remaining - 1>::process(layers, input, output, n);
+        }
+      };
+    
+      template<typename Layers>
+      struct processor<Layers, 0>
+      {
+        template<typename Matrix, typename Matrix2>
+        static void process(Layers & layers, Eigen::MatrixBase<Matrix> const &input, Eigen::MatrixBase<Matrix2> const &output, const int n)
+        {
+          
+        }
+      };
+    
+      template<typename... Layers>
+      struct model
+      {
+        std::tuple<Layers...> m_layers;
+
+        template<typename Matrix, typename Matrix2>
+        void process(Eigen::MatrixBase<Matrix> const & input, Eigen::MatrixBase<Matrix2> const & output, const int n)
+        {
+          processor<std::tuple<Layers...>, std::tuple_size_v<std::tuple<Layers...>>>::process(m_layers, input, output, n);
+        }
+      };
+    } // namespace binary
+    */
+
+    namespace iterated
+    {
+      template<typename Layers, int remaining>
+      struct processor
+      {
+        template<typename Matrix>
+        static auto process(Layers &layers, Eigen::MatrixBase<Matrix> const &input, const int n)
+        {
+          return std::get<std::tuple_size_v<Layers> - remaining>(layers).process(processor<Layers, remaining - 1>::process(layers, input, n), n);
+        }
+      };
+    
+      template<typename Layers>
+      struct processor<Layers, 1>
+      {
+        template<typename Matrix>
+        static auto process(Layers & layers, Eigen::MatrixBase<Matrix> const &input, const int n)
+        {
+          return std::get<std::tuple_size_v<Layers> - 1>(layers).process(input, n);
+        }
+      };
+    
+      template<typename... Layers>
+      struct model
+      {
+        std::tuple<Layers...> m_layers;
+
+        template<typename M>
+        auto process(Eigen::MatrixBase<M> const & input, const int n)
+        {
+          return processor<std::tuple<Layers...>, std::tuple_size_v<std::tuple<Layers...>>>::process(m_layers, input, n);
+        }
+      };
+    }
+    
+    namespace unary
+    {
+      template<typename... Layers>
+      struct model
+      {
+        
+      };
+    }
+    
     namespace inplace
     {
       template<typename Layers, int remaining>
@@ -62,7 +145,7 @@ namespace anna
         static void process(Layers &layers, Eigen::MatrixBase<Matrix> const &input, const int n)
         {
           std::get<std::tuple_size_v<Layers> - remaining>(layers).process_inplace(input, n);
-          anna::sequence::inplace::processor<Layers, remaining - 1>::process(layers, input, n);
+          processor<Layers, remaining - 1>::process(layers, input, n);
         }
       };
     
@@ -84,7 +167,7 @@ namespace anna
         template<typename Matrix>
         void process(Eigen::MatrixBase<Matrix> const & input, const int n)
         {
-          anna::sequence::inplace::processor<std::tuple<Layers...>, std::tuple_size_v<std::tuple<Layers...>>>::process(m_layers, input, n);
+          processor<std::tuple<Layers...>, std::tuple_size_v<std::tuple<Layers...>>>::process(m_layers, input, n);
         }
       };
     } // namespace inplace
