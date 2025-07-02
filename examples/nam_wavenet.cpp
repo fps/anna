@@ -1,4 +1,4 @@
-#include <anna/anna.hpp>
+#include <anna/nam_wavenet.hpp>
 #include <iostream>
 #include <chrono>
 
