@@ -136,6 +136,11 @@ namespace anna
           }
         }
       }
+
+      for (int row = 0; row < out_channels; ++row)
+      {
+        m_bias(row) = params.at(idx++);
+      }
     }
   };
   

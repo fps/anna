@@ -15,7 +15,7 @@ int main()
     float, buffer_size,
     1, 1,
     anna::nam::wavenet_block<
-      float, buffer_size, 1, 1, 16, 8,
+      float, buffer_size, 1, 1, 16, 8, false,
       anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 1>,
       anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 2>,
       anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 4>,
@@ -28,7 +28,7 @@ int main()
       anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 512>
       >,
     anna::nam::wavenet_block<
-      float, buffer_size, 1, 16, 8, 1,
+      float, buffer_size, 1, 16, 8, 1, true,
       anna::nam::wavenet_layer<float, buffer_size, 3, 1, 8, 1>,
       anna::nam::wavenet_layer<float, buffer_size, 3, 1, 8, 2>,
       anna::nam::wavenet_layer<float, buffer_size, 3, 1, 8, 4>,

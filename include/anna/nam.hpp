@@ -4,6 +4,7 @@
 #include <anna/tanh.hpp>
 
 #include <cassert>
+#include <iostream> // # TODO: get rid of this
 
 namespace anna
 {
@@ -120,7 +121,7 @@ namespace anna
       }
     };
 
-     template<typename T, int N, int bottom_in_channels, int in_channels, int channels, int head_output_channels, typename... Layers>
+    template<typename T, int N, int bottom_in_channels, int in_channels, int channels, int head_output_channels, bool head_bias, typename... Layers>
     struct wavenet_block
     {
       typedef std::tuple<Layers...> layers_type;
@@ -162,7 +163,13 @@ namespace anna
      
       void set_parameters(std::vector<T> const & params, size_t & idx)
       {
+        anna::set_parameters(m_input_rechannel_weights, params, idx);
         wavenet_block_set_parameters<T, std::tuple<Layers...>, sizeof...(Layers)>::go(m_layers, params, idx);
+        anna::set_parameters(m_head_rechannel_weights, params, idx);
+        if constexpr (head_bias)
+        {
+          anna::set_parameters(m_head_rechannel_bias, params, idx);
+        }
       }
     };
     
@@ -207,7 +214,8 @@ namespace anna
         size_t idx = 0;
         m_block1.set_parameters(params, idx);
         m_block2.set_parameters(params, idx);
-        m_head_scale = params.at(idx);
+        m_head_scale = params.at(idx++);
+        std::cout << idx << "\n";
         assert(idx == params.size());
       }
     };
