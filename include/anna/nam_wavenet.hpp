@@ -7,7 +7,7 @@
 
 namespace anna
 {
-  template<typename T, int N, int kernel_size, int bottom_in_channels, int channels, int dilation, bool linear = true>
+  template<typename T, int N, int kernel_size, int bottom_in_channels, int channels, int dilation, bool last = false>
   struct nam_wavenet_layer
   {
     typedef Eigen::Matrix<T, channels, N> intermediate_type;
@@ -31,8 +31,17 @@ namespace anna
 
     }
     
-    template<typename Matrix1, typename Matrix2, typename Matrix3, typename Matrix4>
-    inline void process(Eigen::MatrixBase<Matrix1> const & input, Eigen::MatrixBase<Matrix2> const & bottom_input, Eigen::MatrixBase<Matrix3> const & head, Eigen::MatrixBase<Matrix4> const & output, const int n)
+    template<
+      typename Matrix1,
+      typename Matrix2,
+      typename Matrix3,
+      typename Matrix4
+      >
+    inline void process(
+      Eigen::MatrixBase<Matrix1> const & input,
+      Eigen::MatrixBase<Matrix2> const & bottom_input,
+      Eigen::MatrixBase<Matrix3> const & head,
+      Eigen::MatrixBase<Matrix4> const & output, const int n)
     {
       m_dilated.process(input, output, n);
 
@@ -41,29 +50,52 @@ namespace anna
       inplace_eigen_fast_tanh(const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n));
       
       const_cast<Eigen::MatrixBase<Matrix3>&>(head).template leftCols(n).noalias() += output.template leftCols(n);
+
+      if constexpr(!last) {
+        const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n) = (m_linear_weights * output.template leftCols(n)).colwise() + m_linear_bias;
       
-      const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n).noalias() = (m_linear_weights * output.template leftCols(n)).colwise() + m_linear_bias;
-      
-      const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n).noalias() += input.template leftCols(n);
+        const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n).noalias() += input.template leftCols(n);
+      }
     }
   };
   
   template<typename Layers, int remaining>
   struct process_nam_wavenet_block
   {
-    template<typename Matrix1, typename Matrix2, typename Matrix3>
-    static void go(Layers &layers, Eigen::MatrixBase<Matrix1> const & bottom_input, Eigen::MatrixBase<Matrix2> const & head, Eigen::MatrixBase<Matrix3> const & output, const int n)
+    template<
+      typename Matrix1,
+      typename Matrix2,
+      typename Matrix3,
+      typename Matrix4
+    >
+    static void go(Layers &layers,
+      Eigen::MatrixBase<Matrix1> const & input,
+      Eigen::MatrixBase<Matrix2> const & bottom_input,
+      Eigen::MatrixBase<Matrix3> const & head,
+      Eigen::MatrixBase<Matrix4> const & output,
+      const int n)
     {
-      std::get<std::tuple_size_v<Layers> - remaining>(layers).process(output, bottom_input, head, output, n);
-      anna::process_nam_wavenet_block<Layers, remaining-1>::go(layers, bottom_input, head, output, n);
+      std::get<std::tuple_size_v<Layers> - remaining>(layers).process(input, bottom_input, head, output, n);
+      anna::process_nam_wavenet_block<Layers, remaining-1>::go(layers, output, bottom_input, head, input, n);
+      // const_cast<Eigen::MatrixBase<Matrix1>&>(input).template leftCols(n).noalias() = output.template leftCols(n);
     }
   };
   
   template<typename Layers>
   struct process_nam_wavenet_block<Layers, 0>
   {
-    template<typename Matrix1, typename Matrix2, typename Matrix3>
-    static void go(Layers &layers, Eigen::MatrixBase<Matrix1> const & bottom_input, Eigen::MatrixBase<Matrix2> const & head, Eigen::MatrixBase<Matrix3> const & output, const int n)
+    template<
+      typename Matrix1,
+      typename Matrix2,
+      typename Matrix3,
+      typename Matrix4
+    >
+    static void go(Layers &layers,
+      Eigen::MatrixBase<Matrix1> const & input,
+      Eigen::MatrixBase<Matrix2> const & bottom_input,
+      Eigen::MatrixBase<Matrix3> const & head,
+      Eigen::MatrixBase<Matrix4> const & output,
+      const int n)
     {
 
     }
@@ -80,6 +112,9 @@ namespace anna
 
     typedef Eigen::Matrix<T, channels, N> output_type;
     output_type m_output;
+
+    typedef Eigen::Matrix<T, channels, N> buffer_type;
+    output_type m_buffer;
 
     typedef Eigen::Matrix<T, head_output_channels, N> head_output_type;
     head_output_type m_head_output;
@@ -99,10 +134,10 @@ namespace anna
     template<typename Matrix1, typename Matrix2>
     inline void process(Eigen::MatrixBase<Matrix1> const & input, Eigen::MatrixBase<Matrix2> const & bottom_input, const int n)
     {
-      m_output.template leftCols(n).noalias() = m_input_rechannel_weights * input.template leftCols(n);
+      m_buffer.template leftCols(n).noalias() = m_input_rechannel_weights * input.template leftCols(n);
       
-      std::get<0>(m_layers).process(m_output, bottom_input, m_head, m_output, n);
-      anna::process_nam_wavenet_block<layers_type, std::tuple_size_v<layers_type> - 1>::go(m_layers, bottom_input, m_head, m_output, n);
+      // std::get<0>(m_layers).process(m_buffer, bottom_input, m_head, m_output, n);
+      anna::process_nam_wavenet_block<layers_type, sizeof...(Layers)>::go(m_layers, m_buffer, bottom_input, m_head, m_output, n);
       
       m_head_output.template leftCols(n).noalias() = (m_head_rechannel_weights * m_head.template leftCols(n)).colwise() + m_head_rechannel_bias;
     }

@@ -36,7 +36,7 @@ int main()
       anna::nam_wavenet_layer<float, buffer_size, 3, 1, 8, 64>,
       anna::nam_wavenet_layer<float, buffer_size, 3, 1, 8, 128>,
       anna::nam_wavenet_layer<float, buffer_size, 3, 1, 8, 256>,
-      anna::nam_wavenet_layer<float, buffer_size, 3, 1, 8, 512>
+      anna::nam_wavenet_layer<float, buffer_size, 3, 1, 8, 512, true>
       >
     > model;
 
