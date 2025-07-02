@@ -126,13 +126,13 @@ namespace anna
 
     void set_parameters(std::vector<T> const & params, size_t & idx)
     {
-      for (int k = 0; k < kernel_size; ++k)
+      for (int row = 0; row < out_channels; ++row)
       {
-        for (int row = 0; row < out_channels; ++row)
+        for (int col = 0; col < in_channels; ++col)
         {
-          for (int col = 0; col < in_channels; ++col)
+          for (int k = 0; k < kernel_size; ++k)
           {
-            m_weights[k](row, col) = params.at(idx++);
+             m_weights[k](row, col) = params.at(idx++);
           }
         }
       }

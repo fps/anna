@@ -3,14 +3,21 @@
 #include <chrono>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <sndfile.h>
 
 #define buffer_size 64
 #define process_size 64
 // #define bench_nframes (48000*100)
 #define bench_nframes (64 * 4096)
 
-int main()
+int main(int argc, char *argv[])
 {
+  if (argc < 4)
+  {
+    std::cout << "Usage: " << argv[0] << " nam input output\n";
+    return 1;
+  }
+  
   anna::nam::wavenet<
     float, buffer_size,
     1, 1,

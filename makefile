@@ -6,7 +6,7 @@ else
 OPT = -O3 -DNDEBUG -DEIGEN_NO_DEBUG 
 endif
 
-CXXFLAGS ?= -std=c++20 -Wall $(OPT) -DEIGEN_STACK_ALLOCATION_LIMIT=0 -I ${EIGEN_INCLUDE}  -I include `pkg-config nlohmann_json --cflags`
+CXXFLAGS ?= -std=c++20 -Wall $(OPT) -DEIGEN_STACK_ALLOCATION_LIMIT=0 -I ${EIGEN_INCLUDE}  -I include `pkg-config nlohmann_json sndfile --cflags`
 
 ifeq ($(COLOR),1)
 CXXFLAGS += -fdiagnostics-color=always

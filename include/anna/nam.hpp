@@ -194,12 +194,12 @@ namespace anna
       }
       
       template<typename Matrix>
-      inline void process(Eigen::MatrixBase<Matrix> const & input, const int n)
+      inline void process(Eigen::MatrixBase<Matrix> const & bottom_input, const int n)
       {
         m_block1.m_head.template leftCols(n).setZero();
-        m_block1.process(input, input, n);
+        m_block1.process(bottom_input, bottom_input, n);
         m_block2.m_head.template leftCols(n) = m_block1.m_head_output.template leftCols(n);
-        m_block2.process(m_block1.m_buffer1, input, n);
+        m_block2.process(m_block1.m_buffer1, bottom_input, n);
         m_block2.m_head_output.array() *= m_head_scale;
       }
 
