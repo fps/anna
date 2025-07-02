@@ -47,6 +47,7 @@ namespace anna
         inplace_eigen_fast_tanh(const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n));
         
         const_cast<Eigen::MatrixBase<Matrix3>&>(head).template leftCols(n).noalias() += output.template leftCols(n);
+
         if constexpr(!last) {
           const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n) = (m_linear_weights * output.template leftCols(n)).colwise() + m_linear_bias;
         
@@ -72,7 +73,7 @@ namespace anna
         const int n)
       {
         std::get<std::tuple_size_v<Layers> - remaining>(layers).process(input, bottom_input, head, output, n);
-        anna::process_wavenet_block<Layers, remaining-1>::go(layers, output, bottom_input, head, input, n);
+        process_wavenet_block<Layers, remaining-1>::go(layers, output, bottom_input, head, input, n);
         // const_cast<Eigen::MatrixBase<Matrix1>&>(input).template leftCols(n).noalias() = output.template leftCols(n);
       }
     };
@@ -124,7 +125,7 @@ namespace anna
         m_buffer.template leftCols(n).noalias() = m_input_rechannel_weights * input.template leftCols(n);
         
         // std::get<0>(m_layers).process(m_buffer, bottom_input, m_head, m_output, n);
-        anna::process_wavenet_block<layers_type, sizeof...(Layers)>::go(m_layers, m_buffer, bottom_input, m_head, m_output, n);
+        process_wavenet_block<layers_type, sizeof...(Layers)>::go(m_layers, m_buffer, bottom_input, m_head, m_output, n);
         
         m_head_output.template leftCols(n).noalias() = (m_head_rechannel_weights * m_head.template leftCols(n)).colwise() + m_head_rechannel_bias;
       }
