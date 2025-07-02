@@ -3,6 +3,7 @@
 #include <Eigen/Core>
 #include <array>
 #include <cassert>
+#include <vector>
 
 namespace anna
 {
@@ -121,6 +122,20 @@ namespace anna
       Eigen::Matrix<T, out_channels, N> ret;
       process(input, ret, n);
       return ret;
+    }
+
+    void set_parameters(std::vector<T> const & params, size_t & idx)
+    {
+      for (int k = 0; k < kernel_size; ++k)
+      {
+        for (int row = 0; row < out_channels; ++row)
+        {
+          for (int col = 0; col < in_channels; ++col)
+          {
+            m_weights[k](row, col) = params.at(idx++);
+          }
+        }
+      }
     }
   };
   

@@ -1,6 +1,8 @@
 #include <anna/nam.hpp>
 #include <iostream>
 #include <chrono>
+#include <fstream>
+#include <nlohmann/json.hpp>
 
 #define buffer_size 64
 #define process_size 64
@@ -39,6 +41,11 @@ int main()
       anna::nam::wavenet_layer<float, buffer_size, 3, 1, 8, 512, true>
       >
     > model;
+
+  std::ifstream f("data/test.nam");
+  nlohmann::json data = nlohmann::json::parse(f);
+  // std::cout << data["weights"][0] << "\n";
+  model.set_parameters(data["weights"].get<std::vector<float>>());
 
   Eigen::Matrix<float, 1, buffer_size> input = Eigen::Matrix<float, 1, buffer_size>::Zero();
 
