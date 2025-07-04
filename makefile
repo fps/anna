@@ -12,14 +12,16 @@ ifeq ($(COLOR),1)
 CXXFLAGS += -fdiagnostics-color=always
 endif
 
-examples = nam_wavenet inplace_sequence iterated_sequence # input_output_sequence
+LDFLAGS ?= `pkg-config sndfile --libs`
+
+examples = nam_wavenet inplace_sequence iterated_sequence conv1d # input_output_sequence
 
 .PHONY: all clean
 
 all: $(addprefix build/examples/, $(examples))
 
 build/examples/%: examples/%.cpp include/anna/*.hpp makefile
-	$(CXX) $(CXXFLAGS) $< -o $@
+	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
 clean:
 	rm -f build/examples/*

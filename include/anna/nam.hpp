@@ -58,6 +58,7 @@ namespace anna
         Eigen::MatrixBase<Matrix4> const & output, const int n)
       {
         m_dilated.process(input, output, n);
+
         const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n).noalias() += m_input_mixer_weights * bottom_input.leftCols(n);
         
         inplace_eigen_fast_tanh(const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n));
@@ -89,6 +90,7 @@ namespace anna
         std::get<std::tuple_size_v<Layers> - remaining>(layers).process(input, bottom_input, head, output, n);
         process_wavenet_block<Layers, remaining-1>::go(layers, output, bottom_input, head, input, n);
         // const_cast<Eigen::MatrixBase<Matrix1>&>(input).template leftCols(n).noalias() = output.template leftCols(n);
+        // process_wavenet_block<Layers, remaining-1>::go(layers, input, bottom_input, head, output, n);
       }
     };
     
