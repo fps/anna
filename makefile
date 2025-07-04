@@ -14,7 +14,7 @@ endif
 
 LDFLAGS ?= `pkg-config sndfile --libs`
 
-examples = nam_wavenet inplace_sequence iterated_sequence conv1d # input_output_sequence
+examples = nam_wavenet inplace_sequence iterated_sequence conv1d conv1d2by2 # input_output_sequence
 
 .PHONY: all clean
 
