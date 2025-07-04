@@ -88,9 +88,9 @@ namespace anna
       static void go(Layers &layers, Eigen::MatrixBase<Matrix1> const & input, Eigen::MatrixBase<Matrix2> const & bottom_input, Eigen::MatrixBase<Matrix3> const & head, Eigen::MatrixBase<Matrix4> const & output, const int n)
       {
         std::get<std::tuple_size_v<Layers> - remaining>(layers).process(input, bottom_input, head, output, n);
-        process_wavenet_block<Layers, remaining-1>::go(layers, output, bottom_input, head, input, n);
-        // const_cast<Eigen::MatrixBase<Matrix1>&>(input).template leftCols(n).noalias() = output.template leftCols(n);
-        // process_wavenet_block<Layers, remaining-1>::go(layers, input, bottom_input, head, output, n);
+        // process_wavenet_block<Layers, remaining-1>::go(layers, output, bottom_input, head, input, n);
+        const_cast<Eigen::MatrixBase<Matrix1>&>(input).template leftCols(n).noalias() = output.template leftCols(n);
+        process_wavenet_block<Layers, remaining-1>::go(layers, input, bottom_input, head, output, n);
       }
     };
     
@@ -158,7 +158,8 @@ namespace anna
         
         // std::get<0>(m_layers).process(m_buffer, bottom_input, m_head, m_output, n);
         process_wavenet_block<layers_type, sizeof...(Layers)>::go(m_layers, m_buffer1, bottom_input, m_head, m_buffer2, n);
-        
+
+        // TODO: Only do this conditionally when head_bias == true
         m_head_output.template leftCols(n).noalias() = (m_head_rechannel_weights * m_head.template leftCols(n)).colwise() + m_head_rechannel_bias;
       }
 
@@ -201,8 +202,8 @@ namespace anna
         m_block1.m_head.template leftCols(n).setZero();
         m_block1.process(bottom_input, bottom_input, n);
         m_block2.m_head.template leftCols(n) = m_block1.m_head_output.template leftCols(n);
-        m_block2.process(m_block1.m_buffer1, bottom_input, n);
-        m_block2.m_head_output.array() *= m_head_scale;
+        m_block2.process(m_block1.m_buffer2, bottom_input, n);
+        m_block2.m_head_output.template leftCols(n).array() *= m_head_scale;
       }
 
       const output_type &get_output()
