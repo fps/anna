@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 
   std::ifstream f(argv[1]);
   nlohmann::json data = nlohmann::json::parse(f);
-  // std::cout << data["weights"][0] << "\n";
+
   model.set_parameters(data["weights"].get<std::vector<float>>());
 
   SF_INFO sf_info = { 0 };
