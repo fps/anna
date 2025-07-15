@@ -69,22 +69,22 @@ namespace anna
     {
       assert(n <= N);
 
-      if (m_state_head + n < m_state_size) {
+      if (m_state_head + n <= m_state_size) {
         m_state.middleCols(m_state_head, n).noalias() = input.leftCols(n);
       }
       else {
         const int m = m_state_size - m_state_head;
         m_state.middleCols(m_state_head, m).noalias() = input.leftCols(m);
-        m_state.middleCols(0, m_state_head + n - m_state_size).noalias() = input.middleCols(m, n - m);
+        m_state.middleCols(0, n - m).noalias() = input.middleCols(m, n - m);
       }
 
-      if (m_state_head2 + n < m_state_size) {
+      if (m_state_head2 + n <= m_state_size) {
         m_state2.middleCols(m_state_head2, n).noalias() = input.leftCols(n);
       }
       else {
         const int m = m_state_size - m_state_head2;
         m_state2.middleCols(m_state_head2, m).noalias() = input.leftCols(m);
-        m_state2.middleCols(0, m_state_head2 + n - m_state_size).noalias() = input.middleCols(m, n - m);
+        m_state2.middleCols(0, n - m).noalias() = input.middleCols(m, n - m);
       }
       
       advance(n);
@@ -137,9 +137,12 @@ namespace anna
         }
       }
 
-      for (int row = 0; row < out_channels; ++row)
+      if constexpr(bias)
       {
-        m_bias(row) = params.at(idx++);
+        for (int row = 0; row < out_channels; ++row)
+        {
+          m_bias(row) = params.at(idx++);
+        }
       }
     }
   };

@@ -62,6 +62,7 @@ namespace anna
         const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n).noalias() += m_input_mixer_weights * bottom_input.leftCols(n);
         
         inplace_eigen_fast_tanh(const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n));
+        // const_cast<Eigen::MatrixBase<Matrix4>&>(output) = output.array().tanh();
         
         const_cast<Eigen::MatrixBase<Matrix3>&>(head).template leftCols(n).noalias() += output.template leftCols(n);
 
@@ -88,9 +89,9 @@ namespace anna
       static void go(Layers &layers, Eigen::MatrixBase<Matrix1> const & input, Eigen::MatrixBase<Matrix2> const & bottom_input, Eigen::MatrixBase<Matrix3> const & head, Eigen::MatrixBase<Matrix4> const & output, const int n)
       {
         std::get<std::tuple_size_v<Layers> - remaining>(layers).process(input, bottom_input, head, output, n);
-        // process_wavenet_block<Layers, remaining-1>::go(layers, output, bottom_input, head, input, n);
-        const_cast<Eigen::MatrixBase<Matrix1>&>(input).template leftCols(n).noalias() = output.template leftCols(n);
-        process_wavenet_block<Layers, remaining-1>::go(layers, input, bottom_input, head, output, n);
+        process_wavenet_block<Layers, remaining-1>::go(layers, output, bottom_input, head, input, n);
+        // const_cast<Eigen::MatrixBase<Matrix1>&>(input).template leftCols(n).noalias() = output.template leftCols(n);
+        // process_wavenet_block<Layers, remaining-1>::go(layers, input, bottom_input, head, output, n);
       }
     };
     
@@ -202,7 +203,7 @@ namespace anna
         m_block1.m_head.template leftCols(n).setZero();
         m_block1.process(bottom_input, bottom_input, n);
         m_block2.m_head.template leftCols(n) = m_block1.m_head_output.template leftCols(n);
-        m_block2.process(m_block1.m_buffer2, bottom_input, n);
+        m_block2.process(m_block1.m_buffer1, bottom_input, n);
         m_block2.m_head_output.template leftCols(n).array() *= m_head_scale;
       }
 
@@ -218,7 +219,7 @@ namespace anna
         m_block1.set_parameters(params, idx);
         m_block2.set_parameters(params, idx);
         m_head_scale = params.at(idx++);
-        std::cout << idx << "\n";
+        // std::cout << idx << "\n";
         assert(idx == params.size());
       }
     };
