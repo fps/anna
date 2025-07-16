@@ -1,134 +1,43 @@
 #include <anna/conv1d.hpp>
+#include <nlohmann/json.hpp>
 #include <iostream>
+#include <fstream>
+#include <vector>
+#include <cassert>
 
-/*
-  Julia/Flux output:
-
-  julia> m
-  Conv((3,), 1 => 1, dilation=7)  # 4 parameters
-
-  julia> m.weight
-  3×1×1 Array{Float64, 3}:
-  [:, :, 1] =
-   -0.585659001631518
-   -1.1832964472180105
-   -0.8708453658251639
-  
-  julia> m.bias
-  1-element Vector{Float64}:
-   -0.1376414739360313
-  
-  julia> x
-  30×1×1 Array{Float64, 3}:
-  [:, :, 1] =
-    0.7287578826547638
-    2.806995804684981
-   -0.6918188965841756
-   -1.4289864670238364
-    0.6257206153504508
-   -0.37777341905546097
-   -1.0104287558895537
-    0.4669626680917095
-   -0.8392542141021474
-    0.21240630161213886
-   -0.8600798499863161
-    0.6832448217576631
-   -1.0815446402525577
-    0.42322247518726785
-    0.7960259035077595
-   -0.38838058408165177
-    1.2404509386930345
-   -0.14271806735038053
-   -0.015980591192519628
-   -0.04040733447037926
-    0.19811853588214895
-    0.560150113932397
-    0.1824477757511729
-    0.6195508666752078
-    0.9116763321058181
-   -0.7732733351280177
-    1.7515452440547947
-   -0.1753777259396758
-    0.9785195631168343
-   -1.5391375290443692
-
-  julia> m(x)
-  16×1×1 Array{Float64, 3}:
-  [:, :, 1] =
-   -1.7910319009120352
-   -1.3615556473504833
-   -0.5129950742476266
-    2.208098320350361
-   -1.4816693651978943
-    1.4947936068633907
-    0.12545817042552823
-   -1.814285329460718
-    0.9459363522800149
-   -2.153281248107682
-    0.2463014092415027
-   -0.2608577944658314
-   -0.17377771966426223
-   -0.6379242209210633
-   -2.0667593732194365
-    0.8860979016724811
-*/
+#define buffer_size 50
 
 int main()
 {
-  anna::conv1d<float, 10, 3, 1, 1, true, 7> conv1d;
+  std::ifstream f("julia/conv1d.json");
+  nlohmann::json data = nlohmann::json::parse(f);
 
-  std::vector<float> weights {
-     -0.585659001631518,
-     -1.1832964472180105,
-     -0.8708453658251639,
-     -0.1376414739360313
-  };
+  anna::conv1d<float, buffer_size, 3, 16, 16, true, 13> conv1d;
 
-  size_t idx = 0;
-  conv1d.set_parameters(weights, idx);
+  auto parameters = data["parameters"].get<std::vector<float>>();
 
-  std::vector<float> input {
-   0.7287578826547638,
-   2.806995804684981,
-  -0.6918188965841756,
-  -1.4289864670238364,
-   0.6257206153504508,
-  -0.37777341905546097,
-  -1.0104287558895537,
-   0.4669626680917095,
-  -0.8392542141021474,
-   0.21240630161213886,
-  -0.8600798499863161,
-   0.6832448217576631,
-  -1.0815446402525577,
-   0.42322247518726785,
-   0.7960259035077595,
-  -0.38838058408165177,
-   1.2404509386930345,
-  -0.14271806735038053,
-  -0.015980591192519628,
-  -0.04040733447037926,
-   0.19811853588214895,
-   0.560150113932397,
-   0.1824477757511729,
-   0.6195508666752078,
-   0.9116763321058181,
-  -0.7732733351280177,
-   1.7515452440547947,
-  -0.1753777259396758,
-   0.9785195631168343,
-  -1.5391375290443692,
-  };
+  size_t pidx = 0;
+  conv1d.set_parameters(parameters, pidx);
 
-  std::vector<float> output(input.size());
+  assert(pidx == parameters.size());
 
-  for (int idx = 0; idx < 3; ++idx)
+  auto test_input = data["input"].get<std::vector<float>>();
+  auto test_output = data["output"].get<std::vector<float>>();
+
+  auto input_mat = Eigen::Map<Eigen::Matrix<float, 16, 100>>(test_input.data());
+  
+  std::vector<float> output(1600, 0);
+  auto output_mat = Eigen::Map<Eigen::Matrix<float, 16, 100>>(output.data());
+  
+  for (size_t chunk = 0; chunk < 100/buffer_size; ++chunk)
   {
-    conv1d.process(Eigen::Map<Eigen::Matrix<float, 1, 10>>(input.data()+10*idx), Eigen::Map<Eigen::Matrix<float, 1, 10>>(output.data()+10*idx), 10);
+    conv1d.process(input_mat.middleCols(chunk*buffer_size, buffer_size), output_mat.middleCols(chunk*buffer_size, buffer_size), buffer_size);
   }
 
-  for (int idx = 0; idx < 30; ++idx)
+  for (size_t idx = 0; idx < 100; ++idx)
   {
-    std::cout << output[idx] << "\n";
+    std::cout << std::setprecision(9) << test_output.at(test_output.size() - 100 + idx) << " - " << output.at(output.size() - 100 + idx) << " = " << test_output.at(test_output.size() - 100 + idx) - output.at(output.size() - 100 + idx) << "\n";
   }
+
+  // std::cout << output_mat.transpose() << "\n";
 }

@@ -1,20 +1,21 @@
 import Flux
 import JSON
 
-weight = randn(3, 16, 16)
-bias = randn(16)
+weight = randn(Float32, 3, 16, 16)
+bias = randn(Float32, 16)
 
-input = randn(100, 16, 1)
+input = randn(Float32, 100, 16, 1)
 
 m = Flux.Conv(weight, bias, dilation = 13)
 
 output = m(input)
 
 data = Dict(
-    "weights" => permutedims(weight, (3, 2, 1))[:],
-    "bias" => bias,
-    "input" => input[:],
-    "output" => output[:]
+    "parameters" => vcat(permutedims(weight, (1, 2, 3))[:], bias),
+    # "input" => input[:],
+    # "output" =>output[:]
+    "input" => permutedims(input, (3, 2, 1))[:],
+    "output" => permutedims(output, (3, 2, 1))[:]
 )
 
 Base.write("conv1d.json", JSON.json(data, 2))
