@@ -5,8 +5,8 @@
 #include <nlohmann/json.hpp>
 #include <sndfile.h>
 
-#define buffer_size 64
-#define process_size 64
+#define buffer_size 128
+#define process_size 100
 // #define bench_nframes (48000*100)
 #define bench_nframes (64 * 4096)
 
@@ -78,14 +78,14 @@ int main(int argc, char *argv[])
 
   sf_close(sndfile);
 
-  std::vector<float> output_file(sf_info.frames);
+  std::vector<float> output_file(sf_info.frames, 0);
 
   Eigen::Matrix<float, 1, buffer_size> input = Eigen::Matrix<float, 1, buffer_size>::Zero();
 
   auto tick = std::chrono::high_resolution_clock::now();
   
   for (long idx = 0; idx < sf_info.frames/process_size; ++idx) {
-    input.template leftCols(process_size) = Eigen::Matrix<float, 1, process_size>(input_file.data() + idx * process_size);
+    input.template leftCols(process_size) = Eigen::Map<Eigen::Matrix<float, 1, process_size>>(input_file.data() + idx * process_size);
     model.process(input, process_size);
     Eigen::Map<Eigen::Matrix<float, 1, process_size>> output(output_file.data() + idx * process_size);
     output = model.get_output().template leftCols(process_size);
@@ -108,5 +108,6 @@ int main(int argc, char *argv[])
   }
 
   sf_writef_float(sndfile2, output_file.data(), sf_info.frames);
+  // sf_writef_float(sndfile2, input_file.data(), sf_info.frames);
   sf_close(sndfile2);
 }

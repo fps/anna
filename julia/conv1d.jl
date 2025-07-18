@@ -12,8 +12,6 @@ output = m(input)
 
 data = Dict(
     "parameters" => vcat(permutedims(weight, (1, 2, 3))[:], bias),
-    # "input" => input[:],
-    # "output" =>output[:]
     "input" => permutedims(input, (3, 2, 1))[:],
     "output" => permutedims(output, (3, 2, 1))[:]
 )

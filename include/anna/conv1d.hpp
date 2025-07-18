@@ -9,30 +9,29 @@ namespace anna
 {
   template<typename T, int k, int inp, int outp>
   std::array<Eigen::Matrix<T, outp, inp>, k>
-  make_weights()
+  make_weights(T value)
   {
     std::array<Eigen::Matrix<T, outp, inp>, k> w;
-    w.fill(Eigen::Matrix<T, outp, inp>::Constant(1.0f / 24.0f));
+    w.fill(Eigen::Matrix<T, outp, inp>::Constant(value));
     return w;
   }
   
   template<
     typename T,
     int N = 64,
-    int kernel_size = 3,
-    int in_channels = 1,
-    int out_channels = 1,
-    bool bias = false,
-    int dilation = 1,
-    int groups = 1
+    int KernelSize = 3,
+    int InChannels = 1,
+    int OutChannels = 1,
+    bool Bias = false,
+    int Dilation = 1
     >
   struct conv1d {
-    typedef Eigen::Matrix<T, in_channels, 2 * ((kernel_size - 1) * dilation + N)> state_type;
-    typedef Eigen::Vector<T, out_channels> bias_type;
-    typedef std::array<Eigen::Matrix<T, out_channels, in_channels>, kernel_size> weights_type;
+    typedef Eigen::Matrix<T, InChannels, 2 * ((KernelSize - 1) * Dilation + N)> state_type;
+    typedef Eigen::Vector<T, OutChannels> bias_type;
+    typedef std::array<Eigen::Matrix<T, OutChannels, InChannels>, KernelSize> weights_type;
     
     conv1d() :
-      m_weights(make_weights<T, kernel_size, in_channels, out_channels>()),
+      m_weights(make_weights<T, KernelSize, InChannels, OutChannels>(0)),
       m_bias(bias_type::Zero()),
       m_state(state_type::Zero()),
       m_state2(state_type::Zero()),
@@ -65,7 +64,7 @@ namespace anna
 
     template<typename Matrix, typename Matrix2>
     inline void process(Eigen::MatrixBase<Matrix> const & input, Eigen::MatrixBase<Matrix2> const & output, const int n)
-    // inline void process(const Eigen::Matrix<T, in_channels, N>  &input, const int n)
+    // inline void process(const Eigen::Matrix<T, InChannels, N>  &input, const int n)
     {
       assert(n <= N);
 
@@ -89,23 +88,20 @@ namespace anna
       
       advance(n);
 
-      if (m_state_head >= n) {
-        const_cast<Eigen::MatrixBase<Matrix2>&>(output).template leftCols(n).noalias() = m_weights[0] * m_state.middleCols(m_state_head - n, n);
+      if (m_state_head >= m_state_size / 2) {
+        const_cast<Eigen::MatrixBase<Matrix2>&>(output).template leftCols(n).noalias() = m_weights[0] * m_state.middleCols(m_state_head - (n + (KernelSize-1) * Dilation), n);
+        for (int k = 1; k < KernelSize; ++k) {
+          const_cast<Eigen::MatrixBase<Matrix2>&>(output).template leftCols(n).noalias() += m_weights[k] * m_state.middleCols(m_state_head - (n + (KernelSize-1-k) * Dilation), n);
+        }
       }
       else {
-        const_cast<Eigen::MatrixBase<Matrix2>&>(output).template leftCols(n).noalias() = m_weights[0] * m_state2.middleCols(m_state_head2 - n, n);
-      }
-      
-      for (int k = 1; k < kernel_size; ++k) {
-        if (m_state_head >= (n + k * dilation)) {
-          const_cast<Eigen::MatrixBase<Matrix2>&>(output).template leftCols(n).noalias() += m_weights[k] * m_state.middleCols(m_state_head - (n + k * dilation), n);
-        }
-        else {
-          const_cast<Eigen::MatrixBase<Matrix2>&>(output).template leftCols(n).noalias() += m_weights[k] * m_state2.middleCols(m_state_head2 - (n + k * dilation), n);            
+        const_cast<Eigen::MatrixBase<Matrix2>&>(output).template leftCols(n).noalias() = m_weights[0] * m_state2.middleCols(m_state_head2 - (n + (KernelSize-1) * Dilation), n);
+        for (int k = 1; k < KernelSize; ++k) {
+          const_cast<Eigen::MatrixBase<Matrix2>&>(output).template leftCols(n).noalias() += m_weights[k] * m_state2.middleCols(m_state_head2 - (n + (KernelSize-1-k) * Dilation), n);
         }
       }
 
-      if constexpr(bias) {
+      if constexpr(Bias) {
         const_cast<Eigen::MatrixBase<Matrix2>&>(output).template leftCols(n).colwise() += m_bias;
       }
     }
@@ -119,27 +115,27 @@ namespace anna
     template <typename Matrix>
     inline auto process(Eigen::MatrixBase<Matrix> const & input, const int n)
     {
-      Eigen::Matrix<T, out_channels, N> ret;
+      Eigen::Matrix<T, OutChannels, N> ret;
       process(input, ret, n);
       return ret;
     }
 
     void set_parameters(std::vector<T> const & params, size_t & idx)
     {
-      for (int row = 0; row < out_channels; ++row)
+      for (int row = 0; row < OutChannels; ++row)
       {
-        for (int col = 0; col < in_channels; ++col)
+        for (int col = 0; col < InChannels; ++col)
         {
-          for (int k = 0; k < kernel_size; ++k)
+          for (int k = 0; k < KernelSize; ++k)
           {
              m_weights[k](row, col) = params.at(idx++);
           }
         }
       }
 
-      if constexpr(bias)
+      if constexpr(Bias)
       {
-        for (int row = 0; row < out_channels; ++row)
+        for (int row = 0; row < OutChannels; ++row)
         {
           m_bias(row) = params.at(idx++);
         }

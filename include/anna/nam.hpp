@@ -59,7 +59,8 @@ namespace anna
       {
         m_dilated.process(input, output, n);
 
-        const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n).noalias() += m_input_mixer_weights * bottom_input.leftCols(n);
+        // inplace_eigen_fast_tanh(const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n));
+        const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n).noalias() += (m_input_mixer_weights * bottom_input.leftCols(n));
         
         inplace_eigen_fast_tanh(const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n));
         // const_cast<Eigen::MatrixBase<Matrix4>&>(output) = output.array().tanh();
@@ -82,6 +83,25 @@ namespace anna
       }
     };
     
+    template<typename T, typename Layers, int remaining>
+    struct wavenet_block_set_parameters
+    {
+      static void go(Layers & layers, std::vector<T> const & params, size_t & idx)
+      {
+        std::get<std::tuple_size_v<Layers> - remaining>(layers).set_parameters(params, idx);
+        wavenet_block_set_parameters<T, Layers, remaining-1>::go(layers, params, idx);        
+      }
+    }; 
+
+    template<typename T, typename Layers>
+    struct wavenet_block_set_parameters<T, Layers, 0>
+    {
+      static void go(Layers & layers, std::vector<T> const & params, size_t &idx)
+      {
+      
+      }
+    };
+
     template<typename Layers, int remaining>
     struct process_wavenet_block
     {
@@ -105,25 +125,6 @@ namespace anna
       }
     };
     
-    template<typename T, typename Layers, int remaining>
-    struct wavenet_block_set_parameters
-    {
-      static void go(Layers & layers, std::vector<T> const & params, size_t & idx)
-      {
-        std::get<std::tuple_size_v<Layers> - remaining>(layers).set_parameters(params, idx);
-        wavenet_block_set_parameters<T, Layers, remaining-1>::go(layers, params, idx);        
-      }
-    }; 
-
-    template<typename T, typename Layers>
-    struct wavenet_block_set_parameters<T, Layers, 0>
-    {
-      static void go(Layers & layers, std::vector<T> const & params, size_t &idx)
-      {
-      
-      }
-    };
-
     template<typename T, int N, int bottom_in_channels, int in_channels, int channels, int head_output_channels, bool head_bias, typename... Layers>
     struct wavenet_block
     {
@@ -145,8 +146,12 @@ namespace anna
       Eigen::Vector<T, head_output_channels> m_head_rechannel_bias;
 
       wavenet_block() :
+        /*
         m_input_rechannel_weights(Eigen::Matrix<T, channels, in_channels>::Constant(1.0f/24.0f)),
         m_head_rechannel_weights(Eigen::Matrix<T, head_output_channels, channels>::Constant(1.0f/24.0f)),
+        */
+        m_input_rechannel_weights(Eigen::Matrix<T, channels, in_channels>::Zero()),
+        m_head_rechannel_weights(Eigen::Matrix<T, head_output_channels, channels>::Zero()),
         m_head_rechannel_bias(Eigen::Vector<T, head_output_channels>::Zero())
       {
 
@@ -202,8 +207,10 @@ namespace anna
       {
         m_block1.m_head.template leftCols(n).setZero();
         m_block1.process(bottom_input, bottom_input, n);
+
         m_block2.m_head.template leftCols(n) = m_block1.m_head_output.template leftCols(n);
         m_block2.process(m_block1.m_buffer1, bottom_input, n);
+
         m_block2.m_head_output.template leftCols(n).array() *= m_head_scale;
       }
 
@@ -223,42 +230,6 @@ namespace anna
         assert(idx == params.size());
       }
     };
-    /*
-    template<typename T, int N, int in_channels, int channels, int dilation>
-    struct wavenet_direct_layer
-    {
-      conv1d<T, N, channels, channels, true, 1> m_conv1_1;
-      Eigen::Matrix<T, channels, in_channels> m_input_mixer_weights;
-      Eigen::Matrix<T, channels, channels> m_linear_weights;
-      Eigen::Vector<T, channels> m_linear_bias;
-    };
-    
-    template<typename T, int N, int in_channels, int out_channels>
-    struct wavenet_direct
-    {
-      // Eigen::Matrix<T, 16, N> m_head1;
-      
-      Eigen::Matrix<T, 16, in_channels> m_rechannel1_weights;
-      wavenet_direct_layer<T, N, in_channels, 16, 1> m_layer1_1;
-      wavenet_direct_layer<T, N, in_channels, 16, 2> m_layer1_2;
-      wavenet_direct_layer<T, N, in_channels, 16, 4> m_layer1_3;
-      wavenet_direct_layer<T, N, in_channels, 16, 8> m_layer1_4;
-      wavenet_direct_layer<T, N, in_channels, 16, 16> m_layer1_5;
-      wavenet_direct_layer<T, N, in_channels, 16, 32> m_layer1_6;
-      wavenet_direct_layer<T, N, in_channels, 16, 64> m_layer1_7;
-      wavenet_direct_layer<T, N, in_channels, 16, 128> m_layer1_8;
-      wavenet_direct_layer<T, N, in_channels, 16, 256> m_layer1_9;
-      wavenet_direct_layer<T, N, in_channels, 16, 512> m_layer1_10;
-      Eigen::Matrix<T, 8, 16> m_head_rechannel1_weights;
-      template<typename Matrix>
-      inline auto process(Eigen::MatrixBase<Matrix> const & input, const int n)
-      {
-        Eigen::Matrix<T, 16, N> head1;
-        head1.setZero();
-        
-      }
-    };
-    */
   } // namespace nam
   
 } // namespace anna

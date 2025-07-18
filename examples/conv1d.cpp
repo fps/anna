@@ -36,7 +36,7 @@ int main()
 
   for (size_t idx = 0; idx < 100; ++idx)
   {
-    std::cout << std::setprecision(9) << test_output.at(test_output.size() - 100 + idx) << " - " << output.at(output.size() - 100 + idx) << " = " << test_output.at(test_output.size() - 100 + idx) - output.at(output.size() - 100 + idx) << "\n";
+    std::cout << std::setprecision(9) << test_input.at(test_input.size() - 100 + idx) << " => (" << test_output.at(test_output.size() - 100 + idx) << " - " << output.at(output.size() - 100 + idx) << ") = " << test_output.at(test_output.size() - 100 + idx) - output.at(output.size() - 100 + idx) << "\n";
   }
 
   // std::cout << output_mat.transpose() << "\n";
