@@ -11,7 +11,7 @@ m = Flux.Conv(weight, bias, dilation = 13)
 output = m(input)
 
 data = Dict(
-    "parameters" => vcat(permutedims(weight, (1, 2, 3))[:], bias),
+    "parameters" => vcat(weight[end:-1:1,:,:][:], bias),
     "input" => permutedims(input, (3, 2, 1))[:],
     "output" => permutedims(output, (3, 2, 1))[:]
 )
