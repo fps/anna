@@ -6,7 +6,7 @@
 #include <sndfile.h>
 
 #define buffer_size 128
-#define process_size 100
+#define process_size 64
 // #define bench_nframes (48000*100)
 #define bench_nframes (64 * 4096)
 

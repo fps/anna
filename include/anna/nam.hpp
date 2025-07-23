@@ -60,7 +60,7 @@ namespace anna
         m_dilated.process(input, output, n);
 
         // inplace_eigen_fast_tanh(const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n));
-        const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n).noalias() += (m_input_mixer_weights * bottom_input.leftCols(n));
+        const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n).noalias() += m_input_mixer_weights * bottom_input.leftCols(n);
         
         inplace_eigen_fast_tanh(const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n));
         // const_cast<Eigen::MatrixBase<Matrix4>&>(output) = output.array().tanh();
