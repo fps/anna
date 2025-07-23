@@ -1,10 +1,6 @@
 #include <benchmark/benchmark.h>
 #include <Eigen/Core>
-
-static void escape(void *p)
-{
-  asm volatile("" : : "g"(p) : "memory");
-}
+#include <anna/benchmark.hpp>
 
 static void eigen_mul16(benchmark::State & state)
 {

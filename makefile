@@ -17,7 +17,7 @@ endif
 LDFLAGS ?= `pkg-config sndfile --libs`
 
 examples = ringbuffer nam_wavenet inplace_sequence iterated_sequence conv1d conv1d2by2 # input_output_sequence
-benchmarks = bench
+benchmarks = mul conv1d
 
 .PHONY: all clean
 
