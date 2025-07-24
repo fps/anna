@@ -46,38 +46,51 @@ namespace anna
       }
       
       template<
-        typename Matrix1,
-        typename Matrix2,
-        typename Matrix3,
-        typename Matrix4
+        typename M1,
+        typename M2,
+        typename M3,
+        typename M4
         >
       inline void process(
-        Eigen::MatrixBase<Matrix1> const & input,
-        Eigen::MatrixBase<Matrix2> const & bottom_input,
-        Eigen::MatrixBase<Matrix3> const & head,
-        Eigen::MatrixBase<Matrix4> const & output, const int n)
+        Eigen::MatrixBase<M1> const & input,
+        Eigen::MatrixBase<M2> const & bottom_input,
+        Eigen::MatrixBase<M3> const & head,
+        Eigen::MatrixBase<M4> const & output, const int n)
       {
         m_dilated.process(input, output, n);
 
-        // inplace_eigen_fast_tanh(const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n));
-        const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n).noalias() += m_input_mixer_weights * bottom_input.leftCols(n);
+        Eigen::MatrixBase<M4> & out = const_cast<Eigen::MatrixBase<M4>&>(output);
+        // inplace_eigen_fast_tanh(const_cast<Eigen::MatrixBase<M4>&>(output).template leftCols(n));
+        out.leftCols(n).noalias() += m_input_mixer_weights * bottom_input.leftCols(n);
         
-        inplace_eigen_fast_tanh(const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n));
-        // const_cast<Eigen::MatrixBase<Matrix4>&>(output) = output.array().tanh();
+        inplace_eigen_fast_tanh(out.leftCols(n));
+
+        /*
+        T* out_data = out.leftCols(n).data();
+        for (size_t idx = 0; idx < out.RowsAtCompileTime * out.ColsAtCompileTime; ++idx)
+        {
+          T & x = out_data[idx];
+          const T ax = fabsf(x);
+          const T x2 = x * x;
+          x = (x * (2.45550750702956f + 2.45550750702956f * ax + (0.893229853513558f + 0.821226666969744f * ax) * x2) / (2.44506634652299f + (2.44506634652299f + x2) * fabsf(x + 0.814642734961073f * x * ax)));
+        }
+        */
+
+        // const_cast<Eigen::MatrixBase<M4>&>(output) = output.array().tanh();
         
         if constexpr(first)
         {
-          const_cast<Eigen::MatrixBase<Matrix3>&>(head).template leftCols(n).noalias() = output.template leftCols(n);
+          const_cast<Eigen::MatrixBase<M3>&>(head).leftCols(n).noalias() = output.leftCols(n);
         }
         else
         {
-          const_cast<Eigen::MatrixBase<Matrix3>&>(head).template leftCols(n).noalias() += output.template leftCols(n);
+          const_cast<Eigen::MatrixBase<M3>&>(head).leftCols(n).noalias() += output.leftCols(n);
         }
 
         if constexpr(!last) {
-          const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n) = (m_linear_weights * output.template leftCols(n)).colwise() + m_linear_bias;
+          out.leftCols(n) = (m_linear_weights * output.leftCols(n)).colwise() + m_linear_bias;
         
-          const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n).noalias() += input.template leftCols(n);
+          out.leftCols(n).noalias() += input.leftCols(n);
         }
       }
 
@@ -112,12 +125,12 @@ namespace anna
     template<typename Layers, int remaining>
     struct process_wavenet_block
     {
-      template<typename Matrix1, typename Matrix2, typename Matrix3, typename Matrix4>
-      static inline void go(Layers &layers, Eigen::MatrixBase<Matrix1> const & input, Eigen::MatrixBase<Matrix2> const & bottom_input, Eigen::MatrixBase<Matrix3> const & head, Eigen::MatrixBase<Matrix4> const & output, const int n)
+      template<typename M1, typename M2, typename M3, typename M4>
+      static inline void go(Layers &layers, Eigen::MatrixBase<M1> const & input, Eigen::MatrixBase<M2> const & bottom_input, Eigen::MatrixBase<M3> const & head, Eigen::MatrixBase<M4> const & output, const int n)
       {
         std::get<std::tuple_size_v<Layers> - remaining>(layers).process(input, bottom_input, head, output, n);
         process_wavenet_block<Layers, remaining-1>::go(layers, output, bottom_input, head, input, n);
-        // const_cast<Eigen::MatrixBase<Matrix1>&>(input).template leftCols(n).noalias() = output.template leftCols(n);
+        // const_cast<Eigen::MatrixBase<M1>&>(input).template leftCols(n).noalias() = output.template leftCols(n);
         // process_wavenet_block<Layers, remaining-1>::go(layers, input, bottom_input, head, output, n);
       }
     };
@@ -125,8 +138,8 @@ namespace anna
     template<typename Layers>
     struct process_wavenet_block<Layers, 0>
     {
-      template<typename Matrix1, typename Matrix2, typename Matrix3, typename Matrix4>
-      static inline void go(Layers &layers, Eigen::MatrixBase<Matrix1> const & input, Eigen::MatrixBase<Matrix2> const & bottom_input, Eigen::MatrixBase<Matrix3> const & head, Eigen::MatrixBase<Matrix4> const & output, const int n)
+      template<typename M1, typename M2, typename M3, typename M4>
+      static inline void go(Layers &layers, Eigen::MatrixBase<M1> const & input, Eigen::MatrixBase<M2> const & bottom_input, Eigen::MatrixBase<M3> const & head, Eigen::MatrixBase<M4> const & output, const int n)
       {
 
       }
@@ -164,16 +177,16 @@ namespace anna
 
       }
       
-      template<typename Matrix1, typename Matrix2>
-      inline void process(Eigen::MatrixBase<Matrix1> const & input, Eigen::MatrixBase<Matrix2> const & bottom_input, const int n)
+      template<typename M1, typename M2>
+      inline void process(Eigen::MatrixBase<M1> const & input, Eigen::MatrixBase<M2> const & bottom_input, const int n)
       {
-        m_buffer1.template leftCols(n).noalias() = m_input_rechannel_weights * input.template leftCols(n);
+        m_buffer1.leftCols(n).noalias() = m_input_rechannel_weights * input.template leftCols(n);
         
         // std::get<0>(m_layers).process(m_buffer, bottom_input, m_head, m_output, n);
         process_wavenet_block<layers_type, sizeof...(Layers)>::go(m_layers, m_buffer1, bottom_input, m_head, m_buffer2, n);
 
         // TODO: Only do this conditionally when head_bias == true
-        m_head_output.template leftCols(n).noalias() = (m_head_rechannel_weights * m_head.template leftCols(n)).colwise() + m_head_rechannel_bias;
+        m_head_output.leftCols(n).noalias() = (m_head_rechannel_weights * m_head.leftCols(n)).colwise() + m_head_rechannel_bias;
       }
 
      

@@ -82,14 +82,26 @@ int main(int argc, char *argv[])
 
   Eigen::Matrix<float, 1, buffer_size> input = Eigen::Matrix<float, 1, buffer_size>::Zero();
 
+  std::cout << "Processing: " << process_size * (sf_info.frames/process_size) << " samples\n";
+
   auto tick = std::chrono::high_resolution_clock::now();
-  
+
+  for (size_t run = 0; run < 10; ++run)
+  {
   for (long idx = 0; idx < sf_info.frames/process_size; ++idx) {
     input.template leftCols(process_size) = Eigen::Map<Eigen::Matrix<float, 1, process_size>>(input_file.data() + idx * process_size);
     model.process(input, process_size);
     Eigen::Map<Eigen::Matrix<float, 1, process_size>> output(output_file.data() + idx * process_size);
     output = model.get_output().template leftCols(process_size);
   }
+  }
+  
+  /*
+  for (long idx = 0; idx < sf_info.frames/process_size; ++idx) {
+    model.process(input, process_size);
+    // gutput = model.get_output().template leftCols(process_size);
+  }
+  */
 
   auto tock = std::chrono::high_resolution_clock::now();
 

@@ -73,11 +73,13 @@ namespace anna
       m_state_head2 %= m_state_size;
     }
 
-    template<typename Matrix, typename Matrix2>
-    inline void process(Eigen::MatrixBase<Matrix> const & input, Eigen::MatrixBase<Matrix2> const & output, const int n)
+    template<typename M1, typename M2>
+    inline void process(Eigen::MatrixBase<M1> const & input, Eigen::MatrixBase<M2> const & output, const int n)
     // inline void process(const Eigen::Matrix<T, InChannels, N>  &input, const int n)
     {
       assert(n <= N);
+
+      Eigen::MatrixBase<M2> & out = const_cast<Eigen::MatrixBase<M2>&>(output);
 
       /*
         We fill both states with new incoming samples. 
@@ -106,31 +108,31 @@ namespace anna
         Here we check which of the two states has _all_ required samples available
       */
       if (m_state_head >= m_state_size / 2) {
-        const_cast<Eigen::MatrixBase<Matrix2>&>(output).template leftCols(n).noalias() = m_weights[0] * m_state.middleCols(m_state_head - (n + (KernelSize-1) * Dilation), n);
+        out.leftCols(n).noalias() = m_weights[0] * m_state.middleCols(m_state_head - (n + (KernelSize-1) * Dilation), n);
         for (int k = 1; k < KernelSize; ++k) {
-          const_cast<Eigen::MatrixBase<Matrix2>&>(output).template leftCols(n).noalias() += m_weights[k] * m_state.middleCols(m_state_head - (n + (KernelSize-1-k) * Dilation), n);
+          out.leftCols(n).noalias() += m_weights[k] * m_state.middleCols(m_state_head - (n + (KernelSize-1-k) * Dilation), n);
         }
       }
       else {
-        const_cast<Eigen::MatrixBase<Matrix2>&>(output).template leftCols(n).noalias() = m_weights[0] * m_state2.middleCols(m_state_head2 - (n + (KernelSize-1) * Dilation), n);
+        out.leftCols(n).noalias() = m_weights[0] * m_state2.middleCols(m_state_head2 - (n + (KernelSize-1) * Dilation), n);
         for (int k = 1; k < KernelSize; ++k) {
-          const_cast<Eigen::MatrixBase<Matrix2>&>(output).template leftCols(n).noalias() += m_weights[k] * m_state2.middleCols(m_state_head2 - (n + (KernelSize-1-k) * Dilation), n);
+          out.leftCols(n).noalias() += m_weights[k] * m_state2.middleCols(m_state_head2 - (n + (KernelSize-1-k) * Dilation), n);
         }
       }
 
       if constexpr(Bias) {
-        const_cast<Eigen::MatrixBase<Matrix2>&>(output).template leftCols(n).colwise() += m_bias;
+        out.leftCols(n).colwise() += m_bias;
       }
     }
 
-    template <typename Matrix>
-    inline void process_inplace(Eigen::MatrixBase<Matrix> const & input, const int n)
+    template <typename M1>
+    inline void process_inplace(Eigen::MatrixBase<M1> const & input, const int n)
     {
       process(input, input, n);
     }
 
-    template <typename Matrix>
-    inline auto process(Eigen::MatrixBase<Matrix> const & input, const int n)
+    template <typename M1>
+    inline auto process(Eigen::MatrixBase<M1> const & input, const int n)
     {
       Eigen::Matrix<T, OutChannels, N> ret;
       process(input, ret, n);
