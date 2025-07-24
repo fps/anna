@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     1, 1,
     anna::nam::wavenet_block<
       float, buffer_size, 1, 1, 16, 8, false,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 1>,
+      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 1, false, true>,
       anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 2>,
       anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 4>,
       anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 8>,

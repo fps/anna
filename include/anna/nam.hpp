@@ -22,7 +22,7 @@ namespace anna
   
   namespace nam
   {
-    template<typename T, int N, int kernel_size, int bottom_in_channels, int channels, int dilation, bool last = false>
+    template<typename T, int N, int kernel_size, int bottom_in_channels, int channels, int dilation, bool last = false, bool first = false>
     struct wavenet_layer
     {
       typedef Eigen::Matrix<T, channels, N> intermediate_type;
@@ -65,7 +65,14 @@ namespace anna
         inplace_eigen_fast_tanh(const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n));
         // const_cast<Eigen::MatrixBase<Matrix4>&>(output) = output.array().tanh();
         
-        const_cast<Eigen::MatrixBase<Matrix3>&>(head).template leftCols(n).noalias() += output.template leftCols(n);
+        if constexpr(first)
+        {
+          const_cast<Eigen::MatrixBase<Matrix3>&>(head).template leftCols(n).noalias() = output.template leftCols(n);
+        }
+        else
+        {
+          const_cast<Eigen::MatrixBase<Matrix3>&>(head).template leftCols(n).noalias() += output.template leftCols(n);
+        }
 
         if constexpr(!last) {
           const_cast<Eigen::MatrixBase<Matrix4>&>(output).template leftCols(n) = (m_linear_weights * output.template leftCols(n)).colwise() + m_linear_bias;
@@ -205,7 +212,7 @@ namespace anna
       template<typename Matrix>
       inline void process(Eigen::MatrixBase<Matrix> const & bottom_input, const int n)
       {
-        m_block1.m_head.template leftCols(n).setZero();
+        // m_block1.m_head.template leftCols(n).setZero();
         m_block1.process(bottom_input, bottom_input, n);
 
         m_block2.m_head.template leftCols(n) = m_block1.m_head_output.template leftCols(n);
