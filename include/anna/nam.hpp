@@ -86,7 +86,7 @@ namespace anna
     template<typename T, typename Layers, int remaining>
     struct wavenet_block_set_parameters
     {
-      static void go(Layers & layers, std::vector<T> const & params, size_t & idx)
+      static inline void go(Layers & layers, std::vector<T> const & params, size_t & idx)
       {
         std::get<std::tuple_size_v<Layers> - remaining>(layers).set_parameters(params, idx);
         wavenet_block_set_parameters<T, Layers, remaining-1>::go(layers, params, idx);        
@@ -96,7 +96,7 @@ namespace anna
     template<typename T, typename Layers>
     struct wavenet_block_set_parameters<T, Layers, 0>
     {
-      static void go(Layers & layers, std::vector<T> const & params, size_t &idx)
+      static inline void go(Layers & layers, std::vector<T> const & params, size_t &idx)
       {
       
       }
@@ -106,7 +106,7 @@ namespace anna
     struct process_wavenet_block
     {
       template<typename Matrix1, typename Matrix2, typename Matrix3, typename Matrix4>
-      static void go(Layers &layers, Eigen::MatrixBase<Matrix1> const & input, Eigen::MatrixBase<Matrix2> const & bottom_input, Eigen::MatrixBase<Matrix3> const & head, Eigen::MatrixBase<Matrix4> const & output, const int n)
+      static inline void go(Layers &layers, Eigen::MatrixBase<Matrix1> const & input, Eigen::MatrixBase<Matrix2> const & bottom_input, Eigen::MatrixBase<Matrix3> const & head, Eigen::MatrixBase<Matrix4> const & output, const int n)
       {
         std::get<std::tuple_size_v<Layers> - remaining>(layers).process(input, bottom_input, head, output, n);
         process_wavenet_block<Layers, remaining-1>::go(layers, output, bottom_input, head, input, n);
@@ -119,7 +119,7 @@ namespace anna
     struct process_wavenet_block<Layers, 0>
     {
       template<typename Matrix1, typename Matrix2, typename Matrix3, typename Matrix4>
-      static void go(Layers &layers, Eigen::MatrixBase<Matrix1> const & input, Eigen::MatrixBase<Matrix2> const & bottom_input, Eigen::MatrixBase<Matrix3> const & head, Eigen::MatrixBase<Matrix4> const & output, const int n)
+      static inline void go(Layers &layers, Eigen::MatrixBase<Matrix1> const & input, Eigen::MatrixBase<Matrix2> const & bottom_input, Eigen::MatrixBase<Matrix3> const & head, Eigen::MatrixBase<Matrix4> const & output, const int n)
       {
 
       }
