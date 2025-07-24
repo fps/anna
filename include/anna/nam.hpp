@@ -166,10 +166,6 @@ namespace anna
       Eigen::Vector<T, head_output_channels> m_head_rechannel_bias;
 
       wavenet_block() :
-        /*
-        m_input_rechannel_weights(Eigen::Matrix<T, channels, in_channels>::Constant(1.0f/24.0f)),
-        m_head_rechannel_weights(Eigen::Matrix<T, head_output_channels, channels>::Constant(1.0f/24.0f)),
-        */
         m_input_rechannel_weights(Eigen::Matrix<T, channels, in_channels>::Zero()),
         m_head_rechannel_weights(Eigen::Matrix<T, head_output_channels, channels>::Zero()),
         m_head_rechannel_bias(Eigen::Vector<T, head_output_channels>::Zero())
@@ -185,8 +181,14 @@ namespace anna
         // std::get<0>(m_layers).process(m_buffer, bottom_input, m_head, m_output, n);
         process_wavenet_block<layers_type, sizeof...(Layers)>::go(m_layers, m_buffer1, bottom_input, m_head, m_buffer2, n);
 
-        // TODO: Only do this conditionally when head_bias == true
-        m_head_output.leftCols(n).noalias() = (m_head_rechannel_weights * m_head.leftCols(n)).colwise() + m_head_rechannel_bias;
+        if constexpr(head_bias)
+        {
+          m_head_output.leftCols(n) = (m_head_rechannel_weights * m_head.leftCols(n)).colwise() + m_head_rechannel_bias;
+        }
+        else
+        {
+          m_head_output.leftCols(n) = (m_head_rechannel_weights * m_head.leftCols(n));
+        }
       }
 
      

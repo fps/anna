@@ -5,7 +5,8 @@ ANNA_PAGE_SIZE ?= 4096
 ifeq ($(DEBUG),1)
 OPT = -g3
 else
-OPT = -g3 -DNDEBUG -DEIGEN_NO_DEBUG -fno-omit-frame-pointer
+OPT = -O3 -DNDEBUG -DEIGEN_NO_DEBUG
+# OPT = -O3 -DNDEBUG -DEIGEN_NO_DEBUG -fno-omit-frame-pointer
 # OPT = -O3 -DNDEBUG -DEIGEN_NO_DEBUG -march=native -msse4 -mfma
 endif
 
