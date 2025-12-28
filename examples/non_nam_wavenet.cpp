@@ -92,8 +92,8 @@ int main(int argc, char *argv[])
   {
   for (long idx = 0; idx < sf_info.frames/process_size; ++idx) {
     input.template leftCols(process_size) = Eigen::Map<Eigen::Matrix<float, 1, process_size>>(input_file.data() + idx * process_size);
-    Eigen::Map<Eigen::Matrix<float, 1, buffer_size>> output(output_file.data() + idx * process_size);
-    output = model.process(input, process_size);
+    Eigen::Map<Eigen::Matrix<float, 1, process_size>> output(output_file.data() + idx * process_size);
+    output = model.process(input, process_size).template leftCols(process_size);
     // output = model.get_output().template leftCols(process_size);
   }
   }
