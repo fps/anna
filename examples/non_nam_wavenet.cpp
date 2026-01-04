@@ -10,6 +10,7 @@
 // #define bench_nframes (48000*100)
 #define bench_nframes (64 * 4096)
 
+#define nchannels 16
 int main(int argc, char *argv[])
 {
   if (argc < 4)
@@ -18,29 +19,30 @@ int main(int argc, char *argv[])
     return 1;
   }
   
+
 	anna::sequence::input_output::model<
-      anna::conv1d<float, buffer_size, 1, 1, 16, true, 1>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 1>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 2>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 4>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 8>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 16>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 32>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 64>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 128>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 256>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 512>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 1>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 2>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 4>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 8>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 16>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 32>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 64>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 128>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 256>,
-      anna::conv1d<float, buffer_size, 3, 16, 16, true, 512>,
-      anna::conv1d<float, buffer_size, 16, 16, 1, true, 512>
+      anna::conv1d<float, buffer_size, 1, 1, nchannels, true, 1>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 1>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 2>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 4>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 8>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 16>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 32>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 64>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 128>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 256>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 512>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 1>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 2>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 4>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 8>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 16>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 32>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 64>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 128>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 256>,
+      anna::conv1d<float, buffer_size, 3, nchannels, nchannels, true, 512>,
+      anna::conv1d<float, buffer_size, 1, nchannels, 1, true, 512>
     > model;
 
 	/*
@@ -93,7 +95,7 @@ int main(int argc, char *argv[])
   for (long idx = 0; idx < sf_info.frames/process_size; ++idx) {
     input.template leftCols(process_size) = Eigen::Map<Eigen::Matrix<float, 1, process_size>>(input_file.data() + idx * process_size);
     Eigen::Map<Eigen::Matrix<float, 1, process_size>> output(output_file.data() + idx * process_size);
-    output = model.process(input, process_size).template leftCols(process_size);
+    /* output = */ model.process(input, process_size);
     // output = model.get_output().template leftCols(process_size);
   }
   }

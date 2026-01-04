@@ -1,1 +1,1 @@
-perf record -g $*
+perf record -g "$@"

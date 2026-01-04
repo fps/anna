@@ -64,6 +64,8 @@ namespace anna
     int m_state_head;
     int m_state_head2;
 
+		Eigen::Matrix<T, OutChannels, N> m_output;
+
     inline void advance(const int n)
     {
       m_state_head += n;
@@ -129,6 +131,12 @@ namespace anna
     inline void process_inplace(Eigen::MatrixBase<M1> const & input, const int n)
     {
       process(input, input, n);
+    }
+
+    template <typename M1>
+    inline void process_cached(Eigen::MatrixBase<M1> const & input, const int n)
+    {
+      process(input, m_output, n);
     }
 
     template <typename M1>

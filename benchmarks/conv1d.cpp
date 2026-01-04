@@ -66,7 +66,7 @@ static void one(benchmark::State & state)
 
   for (auto _ : state)
   {
-    c.process1(input, output, 4096, 64);
+    c.process1(input, output, 4096, 1);
     escape(&output);
   }
 }
@@ -79,7 +79,7 @@ static void two(benchmark::State & state)
 
   for (auto _ : state)
   {
-    c.process2(input, output, 4096, 64);
+    c.process2(input, output, 4096, 1);
     escape(&output);
   }
 }
@@ -92,7 +92,7 @@ static void three(benchmark::State & state)
 
   for (auto _ : state)
   {
-    c.process3(input, output, 4096, 64);
+    c.process3(input, output, 4096, 1);
     escape(&output);
   }
 }
