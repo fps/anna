@@ -1,12 +1,14 @@
 #include <benchmark/benchmark.h>
 #include <anna/benchmark.hpp>
 
+typedef float v4sf __attribute__ ((vector_size (16)));
+
 template<int rows, int cols, int n>
 void raw(benchmark::State & state)
 {
-  float __attribute__((aligned(16))) r[rows];
-  float __attribute__((aligned(16))) m[rows*cols];
-  float __attribute__((aligned(16))) v[cols];
+  float r[rows];
+  float m[rows*cols];
+  float v[cols];
 
   for (auto _ : state)
   {
