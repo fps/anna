@@ -4,7 +4,7 @@
 typedef float v4sf __attribute__ ((vector_size (16)));
 
 template<int rows, int cols, int n>
-void raw(benchmark::State & state)
+void mul(benchmark::State & state)
 {
   float r[rows];
   float m[rows*cols];
@@ -24,9 +24,4 @@ void raw(benchmark::State & state)
   }
 }
 
-BENCHMARK(raw<64, 64, 1>);
-BENCHMARK(raw<32, 32, 1>);
-BENCHMARK(raw<16, 16, 1>);
-BENCHMARK(raw<8, 8, 1>);
-
-BENCHMARK_MAIN();
+#include "mul.cpp"
