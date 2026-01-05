@@ -7,9 +7,9 @@
 template<int rows, int cols, int n>
 void mul(benchmark::State & state)
 {
-  blitz::Array<float, 2> r(rows, n);
-  blitz::Array<float, 2> m(rows, cols);
-  blitz::Array<float, 2> v(rows, n);
+  blitz::TinyMatrix<float, rows, n> r;
+  blitz::TinyMatrix<float, rows, cols> m;
+  blitz::TinyMatrix<float, cols, n> v;
 
   for (int row = 0; row < rows; ++row)
   {
@@ -42,8 +42,6 @@ void mul(benchmark::State & state)
 
     escape(&r);
   }
-
-  // std::cout << r << "\n";
 }
 
 #include "mul.cpp"

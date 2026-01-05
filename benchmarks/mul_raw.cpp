@@ -2,29 +2,34 @@
 #include <anna/benchmark.hpp>
 
 template<int rows, int cols, int n>
-void raw(benchmark::State & state)
+void mul(benchmark::State & state)
 {
-  float __attribute__((aligned(16))) r[rows];
-  float __attribute__((aligned(16))) m[rows*cols];
-  float __attribute__((aligned(16))) v[cols];
+  float __attribute__((aligned(16))) r[rows * n];
+  float __attribute__((aligned(16))) m[rows * cols];
+  float __attribute__((aligned(16))) v[cols * n];
 
   for (auto _ : state)
   {
-    for (size_t row = 0; row < rows; ++row)
+    for (size_t k = 0; k < n; ++k)
     {
-      r[row] = 0;
-      for (size_t col = 0; col < cols; ++col)
+      for (size_t row = 0; row < rows; ++row)
       {
-        r[row] += m[col*cols+row] * v[row];
+        r[k * rows + row] = 0;
+      }
+    }
+
+    for (size_t k = 0; k < n; ++k)
+    {
+      for (size_t row = 0; row < rows; ++row)
+      {
+        for (size_t col = 0; col < cols; ++col)
+        {
+          r[k * rows + row] += m[col * rows + row] * v[col + k * cols];
+        }
       }
     }
     escape(r);
   }
 }
 
-BENCHMARK(raw<64, 64, 1>);
-BENCHMARK(raw<32, 32, 1>);
-BENCHMARK(raw<16, 16, 1>);
-BENCHMARK(raw<8, 8, 1>);
-
-BENCHMARK_MAIN();
+#include "mul.cpp"

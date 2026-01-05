@@ -11,7 +11,7 @@ OPT = -O3 -DNDEBUG -DEIGEN_NO_DEBUG
 endif
 
 # CXXFLAGS ?= -std=gnu++20 -Wall $(OPT) -DEIGEN_DONT_VECTORIZE -DEIGEN_RUNTIME_NO_MALLOC -DANNA_PAGE_SIZE=${ANNA_PAGE_SIZE} -DEIGEN_STACK_ALLOCATION_LIMIT=0 -I ${EIGEN_INCLUDE}  -I include `pkg-config nlohmann_json sndfile --cflags`
-CXXFLAGS ?= -std=gnu++20 -Wall $(OPT) -DANNA_PAGE_SIZE=${ANNA_PAGE_SIZE} -DEIGEN_STACK_ALLOCATION_LIMIT=0 -I ${EIGEN_INCLUDE}  -I include `pkg-config nlohmann_json sndfile --cflags`
+CXXFLAGS ?= -std=gnu++20 -Wall -Wdouble-promotion $(OPT) -DANNA_PAGE_SIZE=${ANNA_PAGE_SIZE} -DEIGEN_STACK_ALLOCATION_LIMIT=0 -I ${EIGEN_INCLUDE}  -I include `pkg-config nlohmann_json sndfile --cflags`
 
 ifeq ($(COLOR),1)
 CXXFLAGS += -fdiagnostics-color=always
@@ -20,7 +20,7 @@ endif
 LDFLAGS ?= `pkg-config sndfile --libs`
 
 examples = ringbuffer nam_wavenet inplace_sequence iterated_sequence conv1d conv1d2by2 non_nam_wavenet 
-benchmarks = mul_raw mul_eigen mul_intrinsics mul_blitz conv1d
+benchmarks = mul_raw mul_eigen mul_intrinsics mul_blitz mul_blitz_tiny conv1d
 
 .PHONY: all clean
 
