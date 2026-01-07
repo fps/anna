@@ -24,16 +24,16 @@ endif
 LDFLAGS ?= `pkg-config sndfile --libs` -Wl,-z,stack-size=104194304
 
 examples = ringbuffer nam_wavenet inplace_sequence iterated_sequence conv1d conv1d2by2 non_nam_wavenet 
-benchmarks = mul_raw mul_raw_no_init mul_eigen mul_intrinsics mul_blitz mul_blitz_tiny mul_vectorclass2 conv1d non_nam_wavenet
+benchmarks = mul_raw mul_raw_no_init mul_eigen mul_intrinsics mul_blitz mul_blitz_tiny mul_vectorclass2 conv1d non_nam_wavenet dot
 
 .PHONY: all clean
 
 all: $(addprefix build/examples/, $(examples)) $(addprefix build/benchmarks/, $(benchmarks))
 
-build/examples/%: examples/%.cpp include/anna/*.hpp makefile
+build/examples/%: examples/%.cpp include/anna/*.hpp
 	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) -o $@
 
-build/benchmarks/%: benchmarks/%.cpp include/anna/*.hpp makefile
+build/benchmarks/%: benchmarks/%.cpp include/anna/*.hpp
 	$(CXX) $(CXXFLAGS) `pkg-config benchmark --cflags` -fno-omit-frame-pointer $< $(LDFLAGS) `pkg-config benchmark --libs` -o $@
 #	$(CXX) -S $(CXXFLAGS) `pkg-config benchmark --cflags` -fno-omit-frame-pointer $< $(LDFLAGS) `pkg-config benchmark --libs` -o "$@".s
 
