@@ -1,0 +1,11 @@
+BENCHMARK(mul<64, 64, 64>);
+BENCHMARK(mul<32, 32, 64>);
+BENCHMARK(mul<16, 16, 64>);
+BENCHMARK(mul<8, 8, 64>);
+
+BENCHMARK(mul<64, 64, 1>);
+BENCHMARK(mul<32, 32, 1>);
+BENCHMARK(mul<16, 16, 1>);
+BENCHMARK(mul<8, 8, 1>);
+
+BENCHMARK_MAIN();
