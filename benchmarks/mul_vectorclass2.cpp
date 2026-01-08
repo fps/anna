@@ -42,8 +42,8 @@ void mul(benchmark::State & state)
         acc = 0;
         for (size_t col = 0; col < cols; col += 8)
         {
-          v1.load(m + rows * col + col);
-          v2.load(v + k * rows + col);
+          v1.load(m + row * cols + col);
+          v2.load(v + k * cols + col);
           acc += v1 * v2;
         }
 
