@@ -37,7 +37,7 @@ namespace anna
         template<typename Matrix>
         inline void process(Eigen::MatrixBase<Matrix> const & input, const int n)
         {
-          std::get<0>(m_layers).process(input, n);
+          std::get<0>(m_layers).process_cached(input, n);
           processor<std::tuple<Layers...>, std::tuple_size_v<std::tuple<Layers...>>-1>::process(m_layers, std::get<0>(m_layers).m_output, n);
         }
       };
