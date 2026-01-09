@@ -12,7 +12,7 @@ int main()
   std::ifstream f("julia/conv1d.json");
   nlohmann::json data = nlohmann::json::parse(f);
 
-  anna::conv1d<float, buffer_size, 3, 16, 16, true, 13> conv1d;
+  anna::conv1d_double_buffer<float, buffer_size, 3, 16, 16, true, 13> conv1d;
 
   auto parameters = data["parameters"].get<std::vector<float>>();
 

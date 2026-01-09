@@ -5,7 +5,7 @@
 
 static void standard(benchmark::State & state)
 {
-  anna::conv1d<float, 64, 3, 16, 16, true, 1024> conv1d;
+  anna::conv1d_double_buffer<float, 64, 3, 16, 16, true, 1024> conv1d;
   Eigen::Matrix<float, 16, 64> input = Eigen::Matrix<float, 16, 64>::Ones();
   Eigen::Matrix<float, 16, 64> output;
 

@@ -26,7 +26,7 @@ namespace anna
     struct wavenet_layer
     {
       typedef Eigen::Matrix<T, channels, N> intermediate_type;
-      conv1d<T, N, kernel_size, channels, channels, true, dilation> m_dilated;
+      conv1d_double_buffer<T, N, kernel_size, channels, channels, true, dilation> m_dilated;
 
       typedef Eigen::Matrix<T, channels, bottom_in_channels> input_mixer_weights_type;
       input_mixer_weights_type m_input_mixer_weights;

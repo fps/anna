@@ -25,7 +25,7 @@ namespace anna
     bool Bias = false,
     int Dilation = 1
     >
-  struct conv1d {
+  struct conv1d_double_buffer {
     /*
        We make the state twice as big as necessary to hold all samples required. And also
        we create the state _twice_ with one write head starting in the middle. This
@@ -40,7 +40,7 @@ namespace anna
     typedef Eigen::Vector<T, OutChannels> bias_type;
     typedef std::array<Eigen::Matrix<T, OutChannels, InChannels>, KernelSize> weights_type;
     
-    conv1d() :
+    conv1d_double_buffer() :
       m_weights(make_weights<T, KernelSize, InChannels, OutChannels>(0)),
       m_bias(bias_type::Zero()),
       m_state(state_type::Zero()),

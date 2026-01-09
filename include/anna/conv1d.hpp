@@ -46,9 +46,9 @@ namespace anna
 
       Eigen::MatrixBase<M2> & out = const_cast<Eigen::MatrixBase<M2>&>(output);
 
-      out.leftCols(n).noalias() = m_weights[0] * m_state.middleCols(m_state_head - (n + (KernelSize-1) * Dilation), n);
+      out.leftCols(n).noalias() = m_weights[0] * m_state.middleCols(start - (n + (KernelSize-1) * Dilation), n);
       for (int k = 1; k < KernelSize; ++k) {
-        out.leftCols(n).noalias() += m_weights[k] * m_state.middleCols(m_state_head - (n + (KernelSize-1-k) * Dilation), n);
+        out.leftCols(n).noalias() += m_weights[k] * m_state.middleCols(start - (n + (KernelSize-1-k) * Dilation), n);
       }
 
       if constexpr(Bias) {

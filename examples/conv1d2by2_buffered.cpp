@@ -43,7 +43,7 @@
 
 int main()
 {
-  anna::conv1d<float, 10, 3, 2, 2, true, 7> conv1d;
+  anna::conv1d_double_buffer<float, 10, 3, 2, 2, true, 7> conv1d;
 
   std::vector<float> weights {
    -0.9501499539219502,
