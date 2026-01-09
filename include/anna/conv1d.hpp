@@ -29,30 +29,30 @@ namespace anna
     typedef Eigen::Vector<T, OutChannels> bias_type;
     typedef std::array<Eigen::Matrix<T, OutChannels, InChannels>, KernelSize> weights_type;
     
-    conv1d() :
+    weights_type m_weights;
+    bias_type m_bias;
+
+     conv1d() :
       m_weights(make_weights<T, KernelSize, InChannels, OutChannels>(0)),
-      m_bias(bias_type::Zero()),
+      m_bias(bias_type::Zero())
     {
 
     }
 
-    weights_type m_weights;
-    bias_type m_bias;
-
-    template<typename M1, typename M2>
-    inline void process(Eigen::MatrixBase<M1> const & input, Eigen::MatrixBase<M2> const & output, const int start, const int n)
+   template<typename M1, typename M2>
+    inline void process(Eigen::MatrixBase<M1> const & input, Eigen::MatrixBase<M2> const & output, const int input_head, const int output_head, const int n)
     {
       assert(n <= N);
 
       Eigen::MatrixBase<M2> & out = const_cast<Eigen::MatrixBase<M2>&>(output);
 
-      out.leftCols(n).noalias() = m_weights[0] * m_state.middleCols(start - (n + (KernelSize-1) * Dilation), n);
+      out.middleCols(output_head - n, n).noalias() = m_weights[0] * input.middleCols(input_head - (n + (KernelSize-1) * Dilation), n);
       for (int k = 1; k < KernelSize; ++k) {
-        out.leftCols(n).noalias() += m_weights[k] * m_state.middleCols(start - (n + (KernelSize-1-k) * Dilation), n);
+        out.middleCols(output_head - n, n).noalias() += m_weights[k] * input.middleCols(input_head - (n + (KernelSize-1-k) * Dilation), n);
       }
 
       if constexpr(Bias) {
-        out.leftCols(n).colwise() += m_bias;
+        out.middleCols(output_head - n, n).colwise() += m_bias;
       }
     }
 
