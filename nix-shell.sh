@@ -1,2 +1,2 @@
-nix-shell -p eigen nlohmann_json pkg-config libsndfile gbenchmark blitz boost
+nix-shell -p eigen nlohmann_json pkg-config libsndfile gbenchmark gtest blitz boost
 

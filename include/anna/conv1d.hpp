@@ -40,7 +40,7 @@ namespace anna
     bias_type m_bias;
 
     template<typename M1, typename M2>
-    inline void process(Eigen::MatrixBase<M1> const & input, Eigen::MatrixBase<M2> const & output, const int start; const int n)
+    inline void process(Eigen::MatrixBase<M1> const & input, Eigen::MatrixBase<M2> const & output, const int start, const int n)
     {
       assert(n <= N);
 

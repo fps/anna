@@ -25,10 +25,11 @@ LDFLAGS ?= `pkg-config sndfile --libs` -Wl,-z,stack-size=104194304
 
 examples = ringbuffer nam_wavenet inplace_sequence iterated_sequence conv1d_buffered conv1d2by2_buffered non_nam_wavenet 
 benchmarks = mul_raw mul_raw_no_init mul_eigen mul_intrinsics mul_blitz mul_blitz_tiny mul_vectorclass2 conv1d non_nam_wavenet dot
+tests = conv1d
 
 .PHONY: all clean
 
-all: $(addprefix build/examples/, $(examples)) $(addprefix build/benchmarks/, $(benchmarks))
+all: $(addprefix build/examples/, $(examples)) $(addprefix build/benchmarks/, $(benchmarks)) $(addprefix build/tests/, $(tests))
 
 build/examples/%: examples/%.cpp include/anna/*.hpp
 	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) -o $@
@@ -36,6 +37,9 @@ build/examples/%: examples/%.cpp include/anna/*.hpp
 build/benchmarks/%: benchmarks/%.cpp include/anna/*.hpp
 	$(CXX) $(CXXFLAGS) `pkg-config benchmark --cflags` -fno-omit-frame-pointer $< $(LDFLAGS) `pkg-config benchmark --libs` -o $@
 #	$(CXX) -S $(CXXFLAGS) `pkg-config benchmark --cflags` -fno-omit-frame-pointer $< $(LDFLAGS) `pkg-config benchmark --libs` -o "$@".s
+
+build/tests/%: tests/%.cpp include/anna/*.hpp
+	$(CXX) $(CXXFLAGS) `pkg-config gtest_main --cflags` $< `pkg-config gtest_main --libs` -o $@
 
 clean:
 	rm -f build/examples/*
