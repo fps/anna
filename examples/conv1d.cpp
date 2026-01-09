@@ -1,4 +1,4 @@
-#include <anna/conv1d.hpp>
+#include <anna/conv1d_double_buffer.hpp>
 #include <nlohmann/json.hpp>
 #include <iostream>
 #include <fstream>

@@ -1,6 +1,6 @@
 #include <Eigen/Core>
 #include <benchmark/benchmark.h>
-#include <anna/conv1d.hpp>
+#include <anna/conv1d_double_buffer.hpp>
 #include <anna/benchmark.hpp>
 
 static void standard(benchmark::State & state)
