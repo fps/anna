@@ -5,10 +5,11 @@
 #include <cstdint>
 
 #include <stdexcept>
+#include <Eigen/Core>
 
 namespace anna
 {
-  void *create_magic(int number_of_pages, const char *name)
+  static void *create_magic(int number_of_pages, const char *name)
   {
     int size = number_of_pages * getpagesize();
 
@@ -51,5 +52,24 @@ namespace anna
     }
 
     return buffer;
+  }
+
+  template<typename T, int rows, int min_cols>
+  struct magic_matrix_machine
+  {
+    void * m_buffer;
+    magic_matrix_machine() 
+    {
+      if (getpagesize() % (sizeof(T) * rows) != 0)
+      {
+        throw std::runtime_error("This can never work out...");
+      }
+    }
+  };
+
+  template<typename T, int rows, int cols>
+  Eigen::Map<Eigen::Matrix<T, rows, cols>> make_magic_matrix()
+  {
+    
   }
 }
