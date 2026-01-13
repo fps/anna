@@ -54,17 +54,42 @@ namespace anna
     return buffer;
   }
 
-  template<typename T, int rows, int min_cols>
+  template<typename T, int rows, int cols>
   struct magic_matrix_machine
   {
+    int m_pagesize;
+    int m_number_of_pages;
     void * m_buffer;
+
     magic_matrix_machine() 
     {
-      if (getpagesize() % (sizeof(T) * rows) != 0)
+      m_pagesize = getpagesize();
+      // std::cout << "pagesize: " << m_pagesize << "\n";
+      if (m_pagesize % (sizeof(T) * rows) != 0)
       {
-        throw std::runtime_error("This can never work out...");
+        throw std::runtime_error("(sizeof(T) * rows) not a divisor of pagesize");
       }
+
+      if ((sizeof(T) * rows * cols) % m_pagesize != 0)
+      {
+        throw std::runtime_error("pagesize not a divisor of (sizeof(T) * rows * cols)");
+      }
+
+      m_number_of_pages = (sizeof(T) * rows * cols) / m_pagesize;
+
+      m_buffer = create_magic(m_number_of_pages, "anna-magic-matrix");
     }
+
+    Eigen::Map<Eigen::Matrix<T, rows, 2*cols>> get_map()
+    {
+      return Eigen::Map<Eigen::Matrix<T, rows, 2*cols>>((T*)m_buffer);
+    }
+
+    ~magic_matrix_machine()
+    {
+      std::cout << "TODO: ~magic_matrix_machine: cleanup ;)" << "\n";
+    }
+
   };
 
   template<typename T, int rows, int cols>
