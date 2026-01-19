@@ -1,8 +1,14 @@
 #include <gtest/gtest.h>
 #include <anna/next_multiple.hpp>
+#include <Eigen/Core>
 
 TEST(next_multiple, all)
 {
   EXPECT_EQ(anna::next_multiple(101, 10), 110);
   EXPECT_EQ(anna::next_multiple(4111, 4096), 8192);
+}
+
+TEST(next_multiple, build)
+{
+  Eigen::Matrix<float, anna::next_multiple(101, 10), anna::next_multiple(4111, 4096)> m;
 }
