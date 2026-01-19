@@ -1,15 +1,12 @@
 #include <gtest/gtest.h>
 #include <anna/magic.hpp>
 
-typedef anna::magic_matrix_machine<float, 63, 32> throwing_machine1;
-typedef anna::magic_matrix_machine<float, 64, 33> throwing_machine2;
-
 TEST(magic, ThrowOnBadRows) {
-  EXPECT_ANY_THROW({ throwing_machine1(); });
+  EXPECT_ANY_THROW(({ anna::magic_matrix_machine<float, 63, 32>(); }));
 }
 
 TEST(magic, ThrowOnBadCols) {
-  EXPECT_ANY_THROW({ throwing_machine2(); });
+  EXPECT_ANY_THROW(({ anna::magic_matrix_machine<float, 64, 33>(); }));
 }
 
 TEST(magic, WrapAround) {
@@ -21,9 +18,4 @@ TEST(magic, WrapAround) {
 
   EXPECT_EQ((map.template rightCols(128)), (Eigen::Matrix<float, 64, 128>::Ones()));
   EXPECT_NE((map.template rightCols(128)), (Eigen::Matrix<float, 64, 128>::Zero()));
-
-  /*
-  bool equal = map.template rightCols(128) == Eigen::Matrix<float, 64, 128>::Ones();
-  EXPECT_TRUE(equal);
-  */
 }

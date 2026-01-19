@@ -7,6 +7,8 @@
 #include <stdexcept>
 #include <Eigen/Core>
 
+#include <iostream>
+
 namespace anna
 {
   static void *create_magic(int number_of_pages, const char *name)
@@ -54,6 +56,14 @@ namespace anna
     return buffer;
   }
 
+  static void check_pagesize()
+  {
+      if (getpagesize() != ANNA_PAGE_SIZE)
+      {
+        throw std::runtime_error("getpagesize() != ANNA_PAGE_SIZE");
+      }
+  }
+
   template<typename T, int rows, int cols>
   struct magic_matrix_machine
   {
@@ -63,6 +73,8 @@ namespace anna
 
     magic_matrix_machine() 
     {
+      check_pagesize();
+
       m_pagesize = getpagesize();
       // std::cout << "pagesize: " << m_pagesize << "\n";
       if (m_pagesize % (sizeof(T) * rows) != 0)
@@ -87,14 +99,9 @@ namespace anna
 
     ~magic_matrix_machine()
     {
-      std::cout << "TODO: ~magic_matrix_machine: cleanup ;)" << "\n";
+      // std::cout << "TODO: ~magic_matrix_machine: cleanup ;)" << "\n";
+      munmap(m_buffer, m_pagesize * m_number_of_pages * 2);
     }
-
   };
 
-  template<typename T, int rows, int cols>
-  Eigen::Map<Eigen::Matrix<T, rows, cols>> make_magic_matrix()
-  {
-    
-  }
 }

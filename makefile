@@ -1,6 +1,6 @@
 EIGEN_INCLUDE ?= eigen/
 
-ANNA_PAGE_SIZE ?= 4096
+ANNA_PAGE_SIZE ?= $(shell getconf PAGE_SIZE)
 
 ARCHFLAGS ?= -march=native
 
@@ -21,11 +21,11 @@ ifeq ($(COLOR),1)
 CXXFLAGS += -fdiagnostics-color=always
 endif
 
-LDFLAGS ?= `pkg-config sndfile --libs` -Wl,-z,stack-size=104194304
+LDFLAGS ?= `pkg-config sndfile --libs` 
 
 examples = ringbuffer nam_wavenet inplace_sequence iterated_sequence conv1d_buffered conv1d2by2_buffered non_nam_wavenet 
 benchmarks = mul_raw mul_raw_no_init mul_eigen mul_intrinsics mul_blitz mul_blitz_tiny mul_vectorclass2 conv1d non_nam_wavenet dot
-tests = conv1d magic_matrix
+tests = conv1d magic_matrix next_multiple
 
 .PHONY: all clean
 
