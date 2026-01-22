@@ -11,9 +11,9 @@
 
 namespace anna
 {
-  static void *create_magic(int number_of_pages, const char *name)
+  static void *create_magic(const int number_of_pages, const int number_of_mirrored_pages, const char *name)
   {
-    int size = number_of_pages * getpagesize();
+    int ps = getpagesize();
 
     int fd = memfd_create(name, 0);
     if (-1 == fd)
@@ -22,7 +22,7 @@ namespace anna
     }
 
     {
-      int ret = ftruncate(fd, size);
+      int ret = ftruncate(fd, number_of_pages * ps);
 
       if (-1 == ret)
       {
@@ -32,7 +32,7 @@ namespace anna
 
     // Create an anonymous mapping of twice the size required such that 
     // it can be replaced by the next two mappings to the two halfs.
-    uint8_t *buffer = (uint8_t *)mmap(NULL, 2 * size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    uint8_t *buffer = (uint8_t *)mmap(NULL, number_of_pages * ps + number_of_mirrored_pages * ps, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (MAP_FAILED == buffer)
     {
       throw std::runtime_error("Failed to get appropriate memory location");
@@ -41,7 +41,7 @@ namespace anna
     // Now use the known address for buffer from the previous mmap to map our
     // anonyous file from memfd_create to the first half of buffer.
     {
-      void *ret = mmap(buffer, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
+      void *ret = mmap(buffer, number_of_pages * ps, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
       if ((MAP_FAILED == ret) || (ret != buffer))
       {
         throw std::runtime_error("Failed to map the first time");
@@ -51,8 +51,8 @@ namespace anna
     // And now to the second half of the buffer. The original mmap at buffer
     // is thus unmapped and we do not have to unmap it again.
     {
-      void *ret = mmap(buffer + size, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
-      if ((MAP_FAILED == ret) || (ret != (buffer + size)))
+      void *ret = mmap(buffer + number_of_pages * ps, number_of_mirrored_pages * ps, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
+      if ((MAP_FAILED == ret) || (ret != (buffer + number_of_pages * ps)))
       {
         throw std::runtime_error("Failed to map the second time");
       }
@@ -102,7 +102,7 @@ namespace anna
 
       m_number_of_pages = (sizeof(T) * rows * cols) / m_pagesize;
 
-      m_buffer = create_magic(m_number_of_pages, "anna-magic-matrix");
+      m_buffer = create_magic(m_number_of_pages, m_number_of_pages, "anna-magic-matrix");
     }
 
     Eigen::Map<Eigen::Matrix<T, rows, 2*cols>> get_map()

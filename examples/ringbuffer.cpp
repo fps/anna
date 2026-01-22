@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
 
   assert(pagesize == ANNA_PAGE_SIZE);
 
-  int8_t * magic_buffer = (int8_t*)anna::create_magic(1, "lalala");
+  int8_t * magic_buffer = (int8_t*)anna::create_magic(1, 1, "lalala");
 
   magic_buffer[pagesize] = 87;
 

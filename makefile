@@ -27,7 +27,7 @@ examples = ringbuffer nam_wavenet inplace_sequence iterated_sequence conv1d_buff
 benchmarks = mul_raw mul_raw_no_init mul_eigen mul_intrinsics mul_blitz mul_blitz_tiny mul_vectorclass2 conv1d non_nam_wavenet dot
 tests = conv1d magic_matrix next_multiple
 
-.PHONY: all clean
+.PHONY: all clean runtests
 
 all: $(addprefix build/examples/, $(examples)) $(addprefix build/benchmarks/, $(benchmarks)) $(addprefix build/tests/, $(tests))
 
@@ -40,6 +40,9 @@ build/benchmarks/%: benchmarks/%.cpp include/anna/*.hpp
 
 build/tests/%: tests/%.cpp include/anna/*.hpp
 	$(CXX) $(CXXFLAGS) `pkg-config gtest_main --cflags` $< `pkg-config gtest_main --libs` -o $@
+
+runtests: tests
+	for n in build/tests/*; do "$$n"; done
 
 clean:
 	rm -f build/examples/*
