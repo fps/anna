@@ -18,4 +18,9 @@ TEST(magic, WrapAround) {
 
   EXPECT_EQ((map.template rightCols(128)), (Eigen::Matrix<float, 64, 128>::Ones()));
   EXPECT_NE((map.template rightCols(128)), (Eigen::Matrix<float, 64, 128>::Zero()));
+
+  map.template rightCols(128) = Eigen::Matrix<float, 64, 128>::Zero();
+
+  EXPECT_EQ((map.template leftCols(128)), (Eigen::Matrix<float, 64, 128>::Zero()));
+  EXPECT_NE((map.template leftCols(128)), (Eigen::Matrix<float, 64, 128>::Ones()));
 }

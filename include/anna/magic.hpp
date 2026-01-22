@@ -30,26 +30,39 @@ namespace anna
       }
     }
 
+    // Create an anonymous mapping of twice the size required such that 
+    // it can be replaced by the next two mappings to the two halfs.
     uint8_t *buffer = (uint8_t *)mmap(NULL, 2 * size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (MAP_FAILED == buffer)
     {
       throw std::runtime_error("Failed to get appropriate memory location");
     }
 
+    // Now use the known address for buffer from the previous mmap to map our
+    // anonyous file from memfd_create to the first half of buffer.
     {
       void *ret = mmap(buffer, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
-      if (MAP_FAILED == ret)
+      if ((MAP_FAILED == ret) || (ret != buffer))
       {
         throw std::runtime_error("Failed to map the first time");
       }
     }
 
-    // Now map it again, in the next virtual page
+    // And now to the second half of the buffer. The original mmap at buffer
+    // is thus unmapped and we do not have to unmap it again.
     {
       void *ret = mmap(buffer + size, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
-      if (MAP_FAILED == ret)
+      if ((MAP_FAILED == ret) || (ret != (buffer + size)))
       {
         throw std::runtime_error("Failed to map the second time");
+      }
+    }
+
+    {
+      int ret = close(fd);
+      if (0 != ret)
+      {
+        throw std::runtime_error("Failed to close file descriptor");
       }
     }
 
@@ -100,8 +113,11 @@ namespace anna
     ~magic_matrix_machine()
     {
       // std::cout << "TODO: ~magic_matrix_machine: cleanup ;)" << "\n";
-      munmap(m_buffer, m_pagesize * m_number_of_pages * 2);
+      int ret = munmap(m_buffer, m_pagesize * m_number_of_pages * 2);
+      if (0 != ret)
+      {
+        // TODO: What to do here? ;)
+      }
     }
   };
-
 }
