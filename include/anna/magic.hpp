@@ -13,6 +13,11 @@ namespace anna
 {
   static void *create_magic(const int number_of_pages, const int number_of_mirrored_pages, const char *name)
   {
+    if (number_of_mirrored_pages > number_of_pages)
+    {
+      throw std::runtime_error("number_of_mirrored_pages > number_of_pages");
+    }
+
     int ps = getpagesize();
 
     int fd = memfd_create(name, 0);
@@ -30,9 +35,8 @@ namespace anna
       }
     }
 
-    // Create an anonymous mapping of twice the size required such that 
-    // it can be replaced by the next two mappings to the two halfs.
-    uint8_t *buffer = (uint8_t *)mmap(NULL, number_of_pages * ps + number_of_mirrored_pages * ps, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    // Allocate a continuous memory region where we can map the parts of the memfd
+    void *buffer = mmap(NULL, number_of_pages * ps + number_of_mirrored_pages * ps, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (MAP_FAILED == buffer)
     {
       throw std::runtime_error("Failed to get appropriate memory location");
