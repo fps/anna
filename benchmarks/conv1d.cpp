@@ -17,12 +17,10 @@ struct conv1d_1
 {
   const std::array<Eigen::Matrix<T, Channels, Channels>, KernelSize> m_weights;
   const Eigen::Vector<T, Channels> m_bias;
-  const Eigen::Matrix<T, Channels, Channels> m_expanded_bias;
 
   conv1d_1() :
     m_weights(make_weights<T, Channels, KernelSize>()),
-    m_bias(Eigen::Vector<T, Channels>::Ones()),
-    m_expanded_bias(Eigen::Matrix<T, Channels, Channels>::Ones())
+    m_bias(Eigen::Vector<T, Channels>::Ones())
   {
 
   }
@@ -46,12 +44,10 @@ struct conv1d_2
 {
   const std::array<Eigen::Matrix<T, Channels, Channels>, KernelSize> m_weights;
   const Eigen::Vector<T, Channels> m_bias;
-  const Eigen::Matrix<T, Channels, Channels> m_expanded_bias;
 
   conv1d_2() :
     m_weights(make_weights<T, Channels, KernelSize>()),
-    m_bias(Eigen::Vector<T, Channels>::Ones()),
-    m_expanded_bias(Eigen::Matrix<T, Channels, Channels>::Ones())
+    m_bias(Eigen::Vector<T, Channels>::Ones())
   {
 
   }
@@ -68,16 +64,15 @@ struct conv1d_2
   }
 };
 
+
 template<typename T, int KernelSize, int Channels, int Dilation>
 struct conv1d_3
 {
   const std::array<Eigen::Matrix<T, Channels, Channels>, KernelSize> m_weights;
-  const Eigen::Vector<T, Channels> m_bias;
   const Eigen::Matrix<T, Channels, Channels> m_expanded_bias;
 
   conv1d_3() :
     m_weights(make_weights<T, Channels, KernelSize>()),
-    m_bias(Eigen::Vector<T, Channels>::Ones()),
     m_expanded_bias(Eigen::Matrix<T, Channels, Channels>::Ones())
   {
 
