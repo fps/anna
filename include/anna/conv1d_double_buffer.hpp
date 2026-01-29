@@ -34,7 +34,7 @@ namespace anna
     typedef std::array<Eigen::Matrix<T, OutChannels, InChannels>, KernelSize> weights_type;
     
     conv1d_double_buffer() :
-      m_weights(make_weights<T, KernelSize, InChannels, OutChannels>(0)),
+      m_weights(make_weights<T, KernelSize, InChannels, OutChannels>(0.0)),
       m_bias(bias_type::Zero()),
       m_state(state_type::Zero()),
       m_state2(state_type::Zero()),

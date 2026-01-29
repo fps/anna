@@ -36,7 +36,7 @@ namespace anna
     }
 
     // Allocate a continuous memory region where we can map the parts of the memfd
-    void *buffer = mmap(NULL, number_of_pages * ps + number_of_mirrored_pages * ps, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    uint8_t *buffer = (uint8_t*)mmap(NULL, number_of_pages * ps + number_of_mirrored_pages * ps, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (MAP_FAILED == buffer)
     {
       throw std::runtime_error("Failed to get appropriate memory location");

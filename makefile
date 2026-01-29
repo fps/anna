@@ -1,4 +1,4 @@
-EIGEN_INCLUDE ?= eigen/
+EIGEN_INCLUDE ?= eigen-5.0.0/
 
 ANNA_PAGE_SIZE ?= $(shell getconf PAGE_SIZE)
 
@@ -24,7 +24,8 @@ endif
 LDFLAGS ?= `pkg-config sndfile --libs` 
 
 examples = ringbuffer nam_wavenet inplace_sequence iterated_sequence conv1d_buffered conv1d2by2_buffered non_nam_wavenet 
-benchmarks = mul_raw mul_raw_no_init mul_eigen mul_intrinsics mul_blitz mul_blitz_tiny mul_vectorclass2 conv1d non_nam_wavenet dot process_conv1d mul_row_vs_col conv1d_2
+benchmarks = mul_raw mul_raw_no_init mul_eigen mul_intrinsics conv1d non_nam_wavenet dot process_conv1d mul_row_vs_col conv1d_2
+noisy_benchmarks = mul_blitz mul_blitz_tiny mul_vectorclass2 
 tests = conv1d magic_matrix next_multiple
 
 .PHONY: all clean tests benchmarks examples check

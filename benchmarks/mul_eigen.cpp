@@ -11,9 +11,12 @@ void mul(benchmark::State & state)
   
   for (auto _ : state)
   {
+    for (int p = 0; p < 100; ++p)
+    {
     r = m * v;
 
     escape(&r);
+    }
   }
 }
 

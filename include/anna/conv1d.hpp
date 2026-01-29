@@ -9,15 +9,7 @@
 
 namespace anna
 {
-  template<typename T1, typename T2, typename T3>
-  inline void process_conv1d(Eigen::MatrixBase<T1> const & weights, Eigen::MatrixBase<T2> const & input, Eigen::MatrixBase<T3> const & const_output)
-  {
-    Eigen::MatrixBase<T3> & output = const_cast<Eigen::MatrixBase<T3>&>(const_output);
-
-    constexpr int KernelSize = weights.ColsAtCompileTime / input.ColsAtCompileTime;
-  }
-
-  template<typename T, int N = 64, int KernelSize = 3, int InChannels = 1, int OutChannels = 1, bool Bias = false, int Dilation = 1>
+  template<typename T, int N, int KernelSize, int InChannels, int OutChannels, bool Bias, int Dilation>
   struct conv1d {
     typedef Eigen::Vector<T, OutChannels> bias_type;
     typedef std::array<Eigen::Matrix<T, OutChannels, InChannels>, KernelSize> weights_type;
