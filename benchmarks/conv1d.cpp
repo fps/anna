@@ -1,7 +1,6 @@
 #include <Eigen/Core>
 #include <benchmark/benchmark.h>
-#include <anna/benchmark.hpp>
-#include <anna/conv1d_make_weights.hpp>
+#include <anna/make_matrix_array.hpp>
 
 #include <iostream>
 
@@ -111,7 +110,7 @@ struct conv1d<3, Dilation, true>
 template<int N, int Dilation, bool UseSpecialization>
 static void run_with_bias(benchmark::State & state)
 {
-  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_weights<float, 3, 8, 8>(1.0);
+  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_matrix_array<float, 8, 8, 3>(1.0);
   const Eigen::Matrix<float, 8, 4096> input = Eigen::Matrix<float, 8, 4096>::Ones();
   const Eigen::Vector<float, 8> bias = Eigen::Vector<float, 8>::Ones();
   Eigen::Matrix<float, 8, 4096> output = Eigen::Matrix<float, 8, 4096>::Zero();
@@ -128,7 +127,7 @@ static void run_with_bias(benchmark::State & state)
 template<int N, int Dilation, bool UseSpecialization>
 static void run_with_bias2(benchmark::State & state)
 {
-  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_weights<float, 3, 8, 8>(1.0);
+  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_matrix_array<float, 8, 8, 3>(1.0);
   const Eigen::Matrix<float, 8, 4096> input = Eigen::Matrix<float, 8, 4096>::Ones();
   const Eigen::Vector<float, 8> bias = Eigen::Vector<float, 8>::Ones();
   Eigen::Matrix<float, 8, 4096> output = Eigen::Matrix<float, 8, 4096>::Zero();
@@ -145,7 +144,7 @@ static void run_with_bias2(benchmark::State & state)
 template<int N, int Dilation, bool UseSpecialization>
 static void run(benchmark::State & state)
 {
-  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_weights<float, 3, 8, 8>(1.0);
+  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_matrix_array<float, 8, 8, 3>(1.0);
   const Eigen::Matrix<float, 8, 4096> input = Eigen::Matrix<float, 8, 4096>::Ones();
   Eigen::Matrix<float, 8, 4096> output = Eigen::Matrix<float, 8, 4096>::Zero();
 
@@ -161,7 +160,7 @@ static void run(benchmark::State & state)
 template<int N, int Dilation>
 static void run_fixed(benchmark::State & state)
 {
-  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_weights<float, 3, 8, 8>(1.0);
+  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_matrix_array<float, 8, 8, 3>(1.0);
   const Eigen::Matrix<float, 8, 4096> input = Eigen::Matrix<float, 8, 4096>::Ones();
   Eigen::Matrix<float, 8, 4096> output = Eigen::Matrix<float, 8, 4096>::Zero();
 
@@ -177,7 +176,7 @@ static void run_fixed(benchmark::State & state)
 template<int N, int Dilation>
 static void run_fixed_with_bias(benchmark::State & state)
 {
-  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_weights<float, 3, 8, 8>(1.0);
+  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_matrix_array<float, 8, 8, 3>(1.0);
   const Eigen::Matrix<float, 8, 4096> input = Eigen::Matrix<float, 8, 4096>::Ones();
   const Eigen::Vector<float, 8> bias = Eigen::Vector<float, 8>::Ones();
   Eigen::Matrix<float, 8, 4096> output = Eigen::Matrix<float, 8, 4096>::Zero();
@@ -194,7 +193,7 @@ static void run_fixed_with_bias(benchmark::State & state)
 template<int N, int Dilation>
 static void run_fixed_with_bias2(benchmark::State & state)
 {
-  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_weights<float, 3, 8, 8>(1.0);
+  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_matrix_array<float, 8, 8, 3>(1.0);
   const Eigen::Matrix<float, 8, 4096> input = Eigen::Matrix<float, 8, 4096>::Ones();
   const Eigen::Vector<float, 8> bias = Eigen::Vector<float, 8>::Ones();
   Eigen::Matrix<float, 8, 4096> output = Eigen::Matrix<float, 8, 4096>::Zero();
