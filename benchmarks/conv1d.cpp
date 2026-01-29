@@ -1,149 +1,239 @@
 #include <Eigen/Core>
 #include <benchmark/benchmark.h>
-#include <anna/conv1d_double_buffer.hpp>
 #include <anna/benchmark.hpp>
+#include <anna/conv1d_make_weights.hpp>
 
-template<typename T, int Channels, int k>
-std::array<Eigen::Matrix<T, Channels, Channels>, k>
-make_weights()
+#include <iostream>
+
+template<int KernelSize, int Dilation, int N>
+struct conv1d_fixed
 {
-  std::array<Eigen::Matrix<T, Channels, Channels>, k> weights;
-  weights.fill(Eigen::Matrix<T, Channels, Channels>::Ones());
-  return weights;
-}
-
-template<typename T, int KernelSize, int Channels, int Dilation>
-struct conv1d_1
-{
-  const std::array<Eigen::Matrix<T, Channels, Channels>, KernelSize> m_weights;
-  const Eigen::Vector<T, Channels> m_bias;
-
-  conv1d_1() :
-    m_weights(make_weights<T, Channels, KernelSize>()),
-    m_bias(Eigen::Vector<T, Channels>::Ones())
+  template<typename T1, typename T2, typename T3>
+  static void inline process(T1 const & weights, Eigen::MatrixBase<T2> const & input, Eigen::MatrixBase<T3> const & const_output, const int input_head, const int output_head)
   {
-
-  }
-
-  template<typename T1, typename T2>
-  inline void process1(Eigen::MatrixBase<T1> const & input, Eigen::MatrixBase<T2> const & output, const int & head, const int & n) const
-  {
-    const_cast<Eigen::MatrixBase<T2> &>(output).template middleCols(head - n, n).noalias() = std::get<0>(m_weights) * input.template middleCols(head - ((KernelSize-1) * Dilation + n), n);
-    for (int k = (KernelSize-2); k >= 0; --k)
+    Eigen::MatrixBase<T3> & output = const_cast<Eigen::MatrixBase<T3> &>(const_output);
+    output.template middleCols<N>(output_head - N).noalias() = weights[0] * input.template middleCols<N>(input_head - ((KernelSize - 1) * Dilation + N));
+    for (int k = 1; k < KernelSize; ++k)
     {
-      const_cast<Eigen::MatrixBase<T2> &>(output).template middleCols(head - n, n) += m_weights[k] * input.template middleCols(head - ((k * Dilation)) - n, n);
+      output.template middleCols<N>(output_head - N).noalias() += weights[k] * input.template middleCols<N>(input_head - ((KernelSize - k - 1) * Dilation + N));
     }
-    
-    const_cast<Eigen::MatrixBase<T2> &>(output).template middleCols(head - n, n).colwise() += m_bias;
+  }
+
+  template<typename T1, typename T2, typename T3, typename T4>
+  static void inline process_with_bias(T1 const & weights, Eigen::MatrixBase<T2> const & bias, Eigen::MatrixBase<T3> const & input, Eigen::MatrixBase<T4> const & const_output, const int input_head, const int output_head)
+  {
+    Eigen::MatrixBase<T4> & output = const_cast<Eigen::MatrixBase<T4> &>(const_output);
+    process(weights, input, output, input_head, output_head);
+    output.template middleCols<N>(output_head - N).template colwise() += bias;
+  }
+
+  template<typename T1, typename T2, typename T3, typename T4>
+  static void inline process_with_bias2(T1 const & weights, Eigen::MatrixBase<T2> const & bias, Eigen::MatrixBase<T3> const & input, Eigen::MatrixBase<T4> const & const_output, const int input_head, const int output_head)
+  {
+    Eigen::MatrixBase<T3> & output = const_cast<Eigen::MatrixBase<T3> &>(const_output);
+    output.template middleCols<N>(output_head - N).noalias() = weights[0] * input.template middleCols<N>(input_head - ((KernelSize - 1) * Dilation + N));
+    for (int k = 1; k < KernelSize; ++k)
+    {
+      output.template middleCols<N>(output_head - N).noalias() += weights[k] * input.template middleCols<N>(input_head - ((KernelSize - k - 1) * Dilation + N));
+    }
+    output.template middleCols<N>(output_head - N).template colwise() += bias;
   }
 };
 
-
-template<typename T, int KernelSize, int Channels, int Dilation>
-struct conv1d_2
+template<int KernelSize, int Dilation, bool UseSpecialization>
+struct conv1d
 {
-  const std::array<Eigen::Matrix<T, Channels, Channels>, KernelSize> m_weights;
-  const Eigen::Vector<T, Channels> m_bias;
-
-  conv1d_2() :
-    m_weights(make_weights<T, Channels, KernelSize>()),
-    m_bias(Eigen::Vector<T, Channels>::Ones())
+  template<typename T1, typename T2, typename T3>
+  static void inline process(T1 const & weights, Eigen::MatrixBase<T2> const & input, Eigen::MatrixBase<T3> const & const_output, const int n, const int input_head, const int output_head)
   {
-
+    Eigen::MatrixBase<T3> & output = const_cast<Eigen::MatrixBase<T3> &>(const_output);
+    output.middleCols(output_head - n, n).noalias() = weights[0] * input.template middleCols(input_head - (KernelSize - 1  + n), n);
+    for (int k = 1; k < KernelSize; ++k)
+    {
+      output.middleCols(output_head - n, n).noalias() += weights[k] * input.template middleCols(input_head - ((KernelSize - k - 1) * Dilation + n), n);
+    }
   }
 
-  template<typename T1, typename T2>
-  inline void process2(Eigen::MatrixBase<T1> const & input, Eigen::MatrixBase<T2> const & output, const int head, const int n) const 
+  template<typename T1, typename T2, typename T3, typename T4>
+  static void inline process_with_bias(T1 const & weights, Eigen::MatrixBase<T2> const & bias, Eigen::MatrixBase<T3> const & input, Eigen::MatrixBase<T4> const & const_output, const int n, const int input_head, const int output_head)
   {
-    const_cast<Eigen::MatrixBase<T2> &>(output).template middleCols(head - n, n).noalias() =
-        std::get<0>(m_weights) * input.template middleCols(head - ((KernelSize-1) * Dilation + n), n)
-      + std::get<1>(m_weights) * input.template middleCols(head - ((KernelSize-2) * Dilation + n), n)
-      + std::get<2>(m_weights) * input.template middleCols(head - ((KernelSize-3) * Dilation + n), n);
-    
-    const_cast<Eigen::MatrixBase<T2> &>(output).template middleCols(head - n, n).colwise() += m_bias;
+    Eigen::MatrixBase<T4> & output = const_cast<Eigen::MatrixBase<T4> &>(const_output);
+    process(weights, input, output, n, input_head, output_head);
+    output.template middleCols(output_head - n, n).template colwise() += bias;
+  }
+
+  template<typename T1, typename T2, typename T3, typename T4>
+  static void inline process_with_bias2(T1 const & weights, Eigen::MatrixBase<T2> const & bias, Eigen::MatrixBase<T3> const & input, Eigen::MatrixBase<T4> const & const_output, const int n, const int input_head, const int output_head)
+  {
+    Eigen::MatrixBase<T3> & output = const_cast<Eigen::MatrixBase<T3> &>(const_output);
+    output.middleCols(output_head - n, n).noalias() = weights[0] * input.template middleCols(input_head - ((KernelSize - 1) + n), n);
+    for (int k = 1; k < KernelSize; ++k)
+    {
+      output.middleCols(output_head - n, n).noalias() += weights[k] * input.template middleCols(input_head - ((KernelSize - k - 1) * Dilation + n), n);
+    }
+    output.template middleCols(output_head - n, n).template colwise() += bias;
   }
 };
 
-
-template<typename T, int KernelSize, int Channels, int Dilation>
-struct conv1d_3
+template<int Dilation>
+struct conv1d<3, Dilation, true>
 {
-  const std::array<Eigen::Matrix<T, Channels, Channels>, KernelSize> m_weights;
-  const Eigen::Matrix<T, Channels, Channels> m_expanded_bias;
-
-  conv1d_3() :
-    m_weights(make_weights<T, Channels, KernelSize>()),
-    m_expanded_bias(Eigen::Matrix<T, Channels, Channels>::Ones())
+  template<typename T1, typename T2, typename T3>
+  static void inline process(T1 const & weights, Eigen::MatrixBase<T2> const & input, Eigen::MatrixBase<T3> const & const_output, const int n, const int input_head, const int output_head)
   {
-
+    Eigen::MatrixBase<T3> & output = const_cast<Eigen::MatrixBase<T3> &>(const_output);
+    output.middleCols(output_head - n, n).noalias() = 
+        (std::get<0>(weights) * input.template middleCols(input_head - ((Dilation * 2) + n), n))
+      + (std::get<1>(weights) * input.template middleCols(input_head - (Dilation + n), n))
+      + (std::get<2>(weights) * input.template middleCols(input_head - n, n));
   }
 
-  template<typename T1, typename T2>
-  inline void process3(Eigen::MatrixBase<T1> const & input, Eigen::MatrixBase<T2> const & output, const int & head, const int & n) const 
+  template<typename T1, typename T2, typename T3, typename T4>
+  static void inline process_with_bias(T1 const & weights, Eigen::MatrixBase<T2> const & bias, Eigen::MatrixBase<T3> const & input, Eigen::MatrixBase<T4> const & const_output, const int n, const int input_head, const int output_head)
   {
-    const_cast<Eigen::MatrixBase<T2> &>(output).template middleCols(head - n, n).noalias() = 
-        std::get<0>(m_weights) * input.template middleCols(head - ((KernelSize-1) * Dilation + n), n)
-      + std::get<1>(m_weights) * input.template middleCols(head - ((KernelSize-2) * Dilation + n), n)
-      + std::get<2>(m_weights) * input.template middleCols(head - ((KernelSize-3) * Dilation + n), n)
-      + m_expanded_bias;
+    Eigen::MatrixBase<T4> & output = const_cast<Eigen::MatrixBase<T4> &>(const_output);
+    process(weights, input, output, n, input_head, output_head);
+    output.template middleCols(output_head - n, n).template colwise() += bias;
+  }
+
+  template<typename T1, typename T2, typename T3, typename T4>
+  static void inline process_with_bias2(T1 const & weights, Eigen::MatrixBase<T2> const & bias, Eigen::MatrixBase<T3> const & input, Eigen::MatrixBase<T4> const & const_output, const int n, const int input_head, const int output_head)
+  {
+    Eigen::MatrixBase<T4> & output = const_cast<Eigen::MatrixBase<T4> &>(const_output);
+    output.middleCols(output_head - n, n).noalias() = 
+          (std::get<0>(weights) * input.template middleCols(input_head - ((Dilation * 2) + n), n))
+        + (std::get<1>(weights) * input.template middleCols(input_head - (Dilation + n), n))
+        + (std::get<2>(weights) * input.template middleCols(input_head - n, n));
+    output.middleCols(output_head - n, n).colwise() += bias;
   }
 };
 
-static void one(benchmark::State & state)
+template<int N, int Dilation, bool UseSpecialization>
+static void run_with_bias(benchmark::State & state)
 {
-  const conv1d_1<float, 3, 16, 1024> c;
-  const Eigen::Matrix<float, 16, 4096> input = Eigen::Matrix<float, 16, 4096>::Ones();
-  Eigen::Matrix<float, 16, 4096> output;
+  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_weights<float, 3, 8, 8>(1.0);
+  const Eigen::Matrix<float, 8, 4096> input = Eigen::Matrix<float, 8, 4096>::Ones();
+  const Eigen::Vector<float, 8> bias = Eigen::Vector<float, 8>::Ones();
+  Eigen::Matrix<float, 8, 4096> output = Eigen::Matrix<float, 8, 4096>::Zero();
 
   for (auto _ : state)
   {
-    c.process1(input, output, 4096, 64);
-    escape(&output);
+    for (int n = 0; n < 750; ++n)
+    {
+      conv1d<3, Dilation, UseSpecialization>::template process_with_bias(weights, bias, input, output, N, 4096, 4096);
+    }
   }
 }
 
-static void two(benchmark::State & state)
+template<int N, int Dilation, bool UseSpecialization>
+static void run_with_bias2(benchmark::State & state)
 {
-  const conv1d_2<float, 3, 16, 1024> c;
-  const Eigen::Matrix<float, 16, 4096> input = Eigen::Matrix<float, 16, 4096>::Ones();
-  Eigen::Matrix<float, 16, 4096> output;
+  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_weights<float, 3, 8, 8>(1.0);
+  const Eigen::Matrix<float, 8, 4096> input = Eigen::Matrix<float, 8, 4096>::Ones();
+  const Eigen::Vector<float, 8> bias = Eigen::Vector<float, 8>::Ones();
+  Eigen::Matrix<float, 8, 4096> output = Eigen::Matrix<float, 8, 4096>::Zero();
 
   for (auto _ : state)
   {
-    c.process2(input, output, 4096, 64);
-    escape(&output);
+    for (int n = 0; n < 750; ++n)
+    {
+      conv1d<3, Dilation, UseSpecialization>::template process_with_bias2(weights, bias, input, output, N, 4096, 4096);
+    }
   }
 }
 
-static void three(benchmark::State & state)
+template<int N, int Dilation, bool UseSpecialization>
+static void run(benchmark::State & state)
 {
-  const conv1d_3<float, 3, 16, 1024> c;
-  const Eigen::Matrix<float, 16, 4096> input = Eigen::Matrix<float, 16, 4096>::Ones();
-  Eigen::Matrix<float, 16, 4096> output;
+  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_weights<float, 3, 8, 8>(1.0);
+  const Eigen::Matrix<float, 8, 4096> input = Eigen::Matrix<float, 8, 4096>::Ones();
+  Eigen::Matrix<float, 8, 4096> output = Eigen::Matrix<float, 8, 4096>::Zero();
 
   for (auto _ : state)
   {
-    c.process3(input, output, 4096, 64);
-    escape(&output);
+    for (int n = 0; n < 750; ++n)
+    {
+      conv1d<3, Dilation, UseSpecialization>::template process(weights, input, output, N, 4096, 4096);
+    }
   }
 }
 
-static void standard(benchmark::State & state)
+template<int N, int Dilation>
+static void run_fixed(benchmark::State & state)
 {
-  anna::conv1d_double_buffer<float, 64, 3, 16, 16, true, 1024> conv1d;
-  Eigen::Matrix<float, 16, 64> input = Eigen::Matrix<float, 16, 64>::Ones();
-  Eigen::Matrix<float, 16, 64> output;
+  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_weights<float, 3, 8, 8>(1.0);
+  const Eigen::Matrix<float, 8, 4096> input = Eigen::Matrix<float, 8, 4096>::Ones();
+  Eigen::Matrix<float, 8, 4096> output = Eigen::Matrix<float, 8, 4096>::Zero();
 
   for (auto _ : state)
   {
-    conv1d.process(input, output, 64);
-    escape(&output);
+    for (int n = 0; n < 750; ++n)
+    {
+      conv1d_fixed<3, Dilation, N>::template process(weights, input, output, 4096, 4096);
+    }
   }
 }
 
-BENCHMARK(one);
-BENCHMARK(two);
-BENCHMARK(three);
-BENCHMARK(standard);
+template<int N, int Dilation>
+static void run_fixed_with_bias(benchmark::State & state)
+{
+  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_weights<float, 3, 8, 8>(1.0);
+  const Eigen::Matrix<float, 8, 4096> input = Eigen::Matrix<float, 8, 4096>::Ones();
+  const Eigen::Vector<float, 8> bias = Eigen::Vector<float, 8>::Ones();
+  Eigen::Matrix<float, 8, 4096> output = Eigen::Matrix<float, 8, 4096>::Zero();
+
+  for (auto _ : state)
+  {
+    for (int n = 0; n < 750; ++n)
+    {
+      conv1d_fixed<3, Dilation, N>::template process_with_bias(weights, bias, input, output, 4096, 4096);
+    }
+  }
+}
+
+template<int N, int Dilation>
+static void run_fixed_with_bias2(benchmark::State & state)
+{
+  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_weights<float, 3, 8, 8>(1.0);
+  const Eigen::Matrix<float, 8, 4096> input = Eigen::Matrix<float, 8, 4096>::Ones();
+  const Eigen::Vector<float, 8> bias = Eigen::Vector<float, 8>::Ones();
+  Eigen::Matrix<float, 8, 4096> output = Eigen::Matrix<float, 8, 4096>::Zero();
+
+  for (auto _ : state)
+  {
+    for (int n = 0; n < 750; ++n)
+    {
+      conv1d_fixed<3, Dilation, N>::template process_with_bias2(weights, bias, input, output, 4096, 4096);
+    }
+  }
+}
+
+static const bool UseSpecialization = true;
+static const bool UseNoSpecialization = false;
+
+BENCHMARK(run<64, 1024, UseSpecialization>);
+BENCHMARK(run_with_bias<64, 1024, UseSpecialization>);
+BENCHMARK(run_with_bias2<64, 1024, UseSpecialization>);
+
+BENCHMARK(run<64, 1024, UseNoSpecialization>);
+BENCHMARK(run_with_bias<64, 1024, UseNoSpecialization>);
+BENCHMARK(run_with_bias2<64, 1024, UseNoSpecialization>);
+
+BENCHMARK(run_fixed<64, 1024>);
+BENCHMARK(run_fixed_with_bias<64, 1024>);
+BENCHMARK(run_fixed_with_bias2<64, 1024>);
+
+/*
+static const bool DoZero = true;
+static const bool DoNotZero = false;
+static const bool DoBias = true;
+static const bool DoNoBias = false;
+
+BENCHMARK(run<64, 1024, DoNotZero, DoNoBias>);
+BENCHMARK(run<64, 1024, DoNotZero, DoBias>);
+*/
+// BENCHMARK(run<64, 1024, DoZero, DoNoBias>);
+// BENCHMARK(run<64, 1024, DoZero, DoBias>);
 
 BENCHMARK_MAIN();
+
