@@ -24,13 +24,13 @@ static void inline conv1d(WeightsType const & weights, Eigen::MatrixBase<BiasTyp
   output.middleCols(output_head - n, n).colwise() += bias;
 }
 
-template<int N, int Dilation, bool DoBias>
+template<int N, int Channels, int Dilation, bool DoBias>
 static void run(benchmark::State & state)
 {
-  const std::array<Eigen::Matrix<float, 8, 8>, 3> weights = anna::make_matrix_array<float, 8, 8, 3>(1.0);
-  const Eigen::Vector<float, 8> bias = Eigen::Vector<float, 8>::Ones();
-  const Eigen::Matrix<float, 8, 4096> input = Eigen::Matrix<float, 8, 4096>::Ones();
-  Eigen::Matrix<float, 8, 4096> output = Eigen::Matrix<float, 8, 4096>::Zero();
+  const std::array<Eigen::Matrix<float, Channels, Channels>, 3> weights = anna::make_matrix_array<float, Channels, Channels, 3>(1.0);
+  const Eigen::Vector<float, Channels> bias = Eigen::Vector<float, Channels>::Ones();
+  const Eigen::Matrix<float, Channels, 4096> input = Eigen::Matrix<float, Channels, 4096>::Ones();
+  Eigen::Matrix<float, Channels, 4096> output = Eigen::Matrix<float, Channels, 4096>::Zero();
 
   for (auto _ : state)
   {
@@ -48,6 +48,9 @@ static void run(benchmark::State & state)
   }
 }
 
-BENCHMARK(run<64, 1024, false>);
-BENCHMARK(run<64, 1024, true>);
+BENCHMARK(run<64, 16, 1024, false>);
+BENCHMARK(run<64, 16, 1024, true>);
+
+BENCHMARK(run<64, 8, 1024, false>);
+BENCHMARK(run<64, 8, 1024, true>);
 BENCHMARK_MAIN();

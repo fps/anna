@@ -19,7 +19,7 @@ endif
 LDFLAGS ?= `pkg-config sndfile --libs` 
 
 examples = 
-benchmarks = conv1d conv1d_fixed_buffersize conv1d_function conv1d_function_flat_weights
+benchmarks = conv1d conv1d_fixed_buffersize conv1d_function conv1d_function_flat_weights nam_wavenet
 tests = conv1d magic_matrix next_multiple
 
 .PHONY: all clean tests benchmarks examples check
