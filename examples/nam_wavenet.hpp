@@ -74,16 +74,16 @@ namespace anna
 
           if (0 == layer)
           {
-            m_head1.leftCols(n) = m_dilated_outputs1[layer].leftCols(n);
+            m_head1.leftCols(n).noalias() = m_dilated_outputs1[layer].leftCols(n);
           }
           else
           {
-            m_head1.leftCols(n) += m_dilated_outputs1[layer].leftCols(n);
+            m_head1.leftCols(n).noalias() += m_dilated_outputs1[layer].leftCols(n);
           }
         }
 
         // block 2
-        m_dilated_inputs2[0].leftCols(n) = m_input_rechannel_weights2 * m_dilated_outputs1[Layers - 1].leftCols(n);
+        m_dilated_inputs2[0].leftCols(n).noalias() = m_input_rechannel_weights2 * m_dilated_outputs1[Layers - 1].leftCols(n);
 
         for (int layer = 0; layer < Layers; ++layer)
         {
@@ -93,11 +93,11 @@ namespace anna
 
           if (0 == layer)
           {
-            m_head2.leftCols(n) = m_dilated_outputs2[layer].leftCols(n);
+            m_head2.leftCols(n).noalias() = m_dilated_outputs2[layer].leftCols(n);
           }
           else
           {
-            m_head2.leftCols(n) += m_dilated_outputs2[layer].leftCols(n);
+            m_head2.leftCols(n).noalias() += m_dilated_outputs2[layer].leftCols(n);
           }
         }
       }  
