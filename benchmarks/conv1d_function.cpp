@@ -1,6 +1,5 @@
 #include <benchmark/benchmark.h>
 
-
 #include <anna/make_matrix_array.hpp>
 
 template<typename WeightsType, typename InputType, typename OutputType>
