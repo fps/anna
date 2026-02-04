@@ -7,13 +7,16 @@
 
 void run(benchmark::State & state)
 {
+  const int max_block_size = 512 * 2 + 64;
+  // const int max_block_size = 1 << 13;
+  // const int max_block_size = 1024;
   Eigen::Matrix<float, 1, 64> input = Eigen::Matrix<float, 1, 64>::Ones();
   Eigen::Matrix<float, 1, 64> output = Eigen::Matrix<float, 1, 64>::Zero();
-  anna::examples::nam_wavenet<float, 1, 1, 16, 3, 8, 3, 10, 4096> *nam_wavenet = new anna::examples::nam_wavenet<float, 1, 1, 16, 3, 8, 3, 10, 4096>();
+  auto *nam_wavenet = new anna::examples::nam_wavenet<float, 1, 1, 16, 3, 8, 3, 10, max_block_size>();
 
   for (auto _ : state)
   {
-    for (int index = 0; index < 750; ++index)
+    for (int index = 0; index < 4096; ++index)
     {
       nam_wavenet->process(input, output, 64);
     }
