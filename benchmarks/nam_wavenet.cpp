@@ -5,15 +5,14 @@
 
 #include "../examples/nam_wavenet.hpp"
 
-template<int MaxDilation>
+template<int MaxBlockSize>
 void run(benchmark::State & state)
 {
-  const int max_block_size = MaxDilation * 2 + 64;
   // const int max_block_size = 1 << 13;
   // const int max_block_size = 1024;
   Eigen::Matrix<float, 1, 64> input = Eigen::Matrix<float, 1, 64>::Ones();
   Eigen::Matrix<float, 1, 64> output = Eigen::Matrix<float, 1, 64>::Zero();
-  auto *nam_wavenet = new anna::examples::nam_wavenet<float, 1, 1, 16, 3, 8, 3, 10, max_block_size>();
+  auto *nam_wavenet = new anna::examples::nam_wavenet<float, 1, 1, 16, 3, 8, 3, MaxBlockSize>();
 
   for (auto _ : state)
   {
@@ -26,10 +25,8 @@ void run(benchmark::State & state)
   delete nam_wavenet;
 }
 
-BENCHMARK(run<512>);
-BENCHMARK(run<1024>);
-BENCHMARK(run<2048>);
-BENCHMARK(run<4096>);
-BENCHMARK(run<8192>);
+BENCHMARK(run<64 << 0>);
+BENCHMARK(run<64 << 1>);
+BENCHMARK(run<64 << 5>);
 
 BENCHMARK_MAIN();
