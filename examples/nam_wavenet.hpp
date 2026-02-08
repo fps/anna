@@ -79,10 +79,10 @@ namespace anna
       }
 
       template<typename InputType, typename HeadType, typename LayerType, typename NextLayerType>
-      inline void process_layer(Eigen::MatrixBase<InputType> const & input, Eigen::MatrixBase<HeadType> const & const_head, LayerType & layer, NextLayerType & next_layer, const int layer_idx, const bool first, const int n)
+      inline void process_layer(Eigen::MatrixBase<InputType> const & input, Eigen::MatrixBase<HeadType> const & const_head, LayerType & layer, NextLayerType & next_layer, const bool first, const int n)
       {
         Eigen::MatrixBase<HeadType> &head = const_cast<Eigen::MatrixBase<HeadType>&>(const_head);
-        anna::conv1d(layer.m_dilated_weights, layer.m_dilated_bias, 1 << layer_idx, layer.m_input, next_layer.m_input, n, layer.m_input_head, next_layer.m_input_head);
+        anna::conv1d(layer.m_dilated_weights, layer.m_dilated_bias, layer.m_dilation, layer.m_input, next_layer.m_input, n, layer.m_input_head, next_layer.m_input_head);
 
         next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() += layer.m_input_mixer_weights * input.leftCols(n);
 
@@ -105,35 +105,36 @@ namespace anna
       {
         m_layer10.m_input.middleCols(m_layer10.m_input_head, n).noalias() = m_rechannel_weights1 * input.leftCols(n);
 
-        process_layer(input, m_head1, m_layer10, m_layer11, 0, true, n);
-        process_layer(input, m_head1, m_layer11, m_layer12, 1, true, n);
-        process_layer(input, m_head1, m_layer12, m_layer13, 2, true, n);
-        process_layer(input, m_head1, m_layer13, m_layer14, 3, true, n);
-        process_layer(input, m_head1, m_layer14, m_layer15, 4, true, n);
-        process_layer(input, m_head1, m_layer15, m_layer16, 5, true, n);
-        process_layer(input, m_head1, m_layer16, m_layer17, 6, true, n);
-        process_layer(input, m_head1, m_layer17, m_layer18, 7, true, n);
-        process_layer(input, m_head1, m_layer18, m_layer19, 8, true, n);
-        process_layer(input, m_head1, m_layer19, m_layer1a, 9, true, n);
+        process_layer(input, m_head1, m_layer10, m_layer11, true, n);
+        process_layer(input, m_head1, m_layer11, m_layer12, true, n);
+        process_layer(input, m_head1, m_layer12, m_layer13, true, n);
+        process_layer(input, m_head1, m_layer13, m_layer14, true, n);
+        process_layer(input, m_head1, m_layer14, m_layer15, true, n);
+        process_layer(input, m_head1, m_layer15, m_layer16, true, n);
+        process_layer(input, m_head1, m_layer16, m_layer17, true, n);
+        process_layer(input, m_head1, m_layer17, m_layer18, true, n);
+        process_layer(input, m_head1, m_layer18, m_layer19, true, n);
+        process_layer(input, m_head1, m_layer19, m_layer1a, true, n);
        
         m_head2.leftCols(n).noalias() = m_head_rechannel_weights12 * m_head1.leftCols(n);
 
         m_layer20.m_input.middleCols(m_layer20.m_input_head, n).noalias() = m_rechannel_weights2 * m_layer1a.m_input.middleCols(m_layer1a.m_input_head, n);
 
-        process_layer(input, m_head2, m_layer20, m_layer21, 0, true, n);
-        process_layer(input, m_head2, m_layer21, m_layer22, 1, true, n);
-        process_layer(input, m_head2, m_layer22, m_layer23, 2, true, n);
-        process_layer(input, m_head2, m_layer23, m_layer24, 3, true, n);
-        process_layer(input, m_head2, m_layer24, m_layer25, 4, true, n);
-        process_layer(input, m_head2, m_layer25, m_layer26, 5, true, n);
-        process_layer(input, m_head2, m_layer26, m_layer27, 6, true, n);
-        process_layer(input, m_head2, m_layer27, m_layer28, 7, true, n);
-        process_layer(input, m_head2, m_layer28, m_layer29, 8, true, n);
-        process_layer(input, m_head2, m_layer29, m_layer2a, 9, true, n);
-        // const_cast<Eigen::MatrixBase<OutputType>&>(output).leftCols(n).noalias() = m_head_rechannel_weights2 * m_head2.leftCols(n);
-        // const_cast<Eigen::MatrixBase<OutputType>&>(output).leftCols(n).colwise() += m_head_rechannel_bias2;
+        process_layer(input, m_head2, m_layer20, m_layer21, true, n);
+        process_layer(input, m_head2, m_layer21, m_layer22, true, n);
+        process_layer(input, m_head2, m_layer22, m_layer23, true, n);
+        process_layer(input, m_head2, m_layer23, m_layer24, true, n);
+        process_layer(input, m_head2, m_layer24, m_layer25, true, n);
+        process_layer(input, m_head2, m_layer25, m_layer26, true, n);
+        process_layer(input, m_head2, m_layer26, m_layer27, true, n);
+        process_layer(input, m_head2, m_layer27, m_layer28, true, n);
+        process_layer(input, m_head2, m_layer28, m_layer29, true, n);
+        process_layer(input, m_head2, m_layer29, m_layer2a, true, n);
 
-        //const_cast<Eigen::MatrixBase<OutputType>&>(output).leftCols(n).noalias() *= m_head_scale;
+        const_cast<Eigen::MatrixBase<OutputType>&>(output).leftCols(n).noalias() = m_head_rechannel_weights2 * m_head2.leftCols(n);
+        const_cast<Eigen::MatrixBase<OutputType>&>(output).leftCols(n).colwise() += m_head_rechannel_bias2;
+
+        const_cast<Eigen::MatrixBase<OutputType>&>(output).leftCols(n).array() *= m_head_scale;
       }  
     };
   }
