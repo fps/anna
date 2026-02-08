@@ -26,7 +26,7 @@ void run(benchmark::State & state)
 }
 
 BENCHMARK(run<64 << 0>);
-BENCHMARK(run<64 << 1>);
-BENCHMARK(run<64 << 5>);
+// BENCHMARK(run<64 << 1>);
+// BENCHMARK(run<64 << 5>);
 
 BENCHMARK_MAIN();
