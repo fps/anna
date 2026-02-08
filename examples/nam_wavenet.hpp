@@ -5,6 +5,7 @@
 #include <anna/magic.hpp>
 #include <anna/tanh.hpp>
 #include <anna/next_multiple.hpp>
+#include <anna/log.hpp>
 
 namespace anna
 {
@@ -13,7 +14,10 @@ namespace anna
     template<typename T, int InputChannels, int Channels, int KernelSize, int Dilation, int MaxBlockSize>
     struct nam_wavenet_layer
     {
-      Eigen::Matrix<T, Channels, (KernelSize-1) * Dilation + MaxBlockSize> m_input;
+      static const int magic_cols = anna::next_multiple((KernelSize - 1) * Dilation + MaxBlockSize, ANNA_PAGE_SIZE / (Channels * sizeof(T)));
+      // Eigen::Matrix<T, Channels, (KernelSize-1) * Dilation + MaxBlockSize> m_input;
+      anna::magic_matrix_machine<T, Channels, magic_cols> m_magic_matrix_machine;
+      Eigen::Map<Eigen::Matrix<T, Channels, 2 * magic_cols>> m_input;
 
       std::array<Eigen::Matrix<T, Channels, Channels>, KernelSize> m_dilated_weights;
       Eigen::Vector<T, Channels> m_dilated_bias;
@@ -22,12 +26,20 @@ namespace anna
 
       Eigen::Matrix<T, Channels, Channels> m_linear_weights;
 
-      static const int m_input_head = (KernelSize - 1) * Dilation + MaxBlockSize;
+      int m_input_head = (KernelSize - 1) * Dilation + MaxBlockSize;
       static const int m_dilation = Dilation;
 
-      void advance_head(const int n)
+      inline void advance_head(const int n)
       {
+        m_input_head += n;
+        m_input_head = (m_input_head - magic_cols) % magic_cols + magic_cols;
+      }
 
+      nam_wavenet_layer() :
+        m_input(m_magic_matrix_machine.get_map()),
+        m_input_head(magic_cols)
+      {
+        DBG("Channels: " << Channels << ". Dilation: " << Dilation << ", magic_cols: " << magic_cols << ", pages: " << ((m_input.rows() * m_input.cols() * sizeof(T)) / ANNA_PAGE_SIZE))
       }
     };
 
@@ -36,6 +48,11 @@ namespace anna
     {
       Eigen::Matrix<T, Channels, MaxBlockSize> m_input;
       static const int m_input_head = MaxBlockSize;
+
+      inline void advance_head(const int n)
+      {
+        // NO OP
+      }
     };
 
     template<typename T, int InputChannels, int OutputChannels, int Channels1, int KernelSize1, int Channels2, int KernelSize2, int MaxBlockSize>
@@ -86,28 +103,32 @@ namespace anna
       template<typename InputType, typename HeadType, typename LayerType, typename NextLayerType>
       inline void process_layer(Eigen::MatrixBase<InputType> const & input, Eigen::MatrixBase<HeadType> const & const_head, LayerType & layer, NextLayerType & next_layer, const bool first, const int n)
       {
+        DBG("process_layer")
         Eigen::MatrixBase<HeadType> &head = const_cast<Eigen::MatrixBase<HeadType>&>(const_head);
         anna::conv1d(layer.m_dilated_weights, layer.m_dilated_bias, layer.m_dilation, layer.m_input, next_layer.m_input, n, layer.m_input_head, next_layer.m_input_head);
 
-        next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() += layer.m_input_mixer_weights * input.leftCols(n);
+        next_layer.m_input.middleCols(next_layer.m_input_head - n, n).noalias() += layer.m_input_mixer_weights * input.leftCols(n);
 
-        anna::inplace_eigen_fast_tanh(next_layer.m_input.middleCols(next_layer.m_input_head, n));
+        anna::inplace_eigen_fast_tanh(next_layer.m_input.middleCols(next_layer.m_input_head - n, n));
 
-        next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() += layer.m_linear_weights * layer.m_input.leftCols(n);
+        next_layer.m_input.middleCols(next_layer.m_input_head - n, n).noalias() += layer.m_linear_weights * layer.m_input.leftCols(n);
 
         if (true == first)
         {
-          head.leftCols(n).noalias() = next_layer.m_input.middleCols(next_layer.m_input_head, n);
+          head.leftCols(n).noalias() = next_layer.m_input.middleCols(next_layer.m_input_head - n, n);
         }
         else
         {
-          head.leftCols(n).noalias() += next_layer.m_input.middleCols(next_layer.m_input_head, n);
+          head.leftCols(n).noalias() += next_layer.m_input.middleCols(next_layer.m_input_head - n, n);
         }
+
+        layer.advance_head(n);
       }
 
       template<typename InputType, typename OutputType>
       inline void process(Eigen::MatrixBase<InputType> const & input, Eigen::MatrixBase<OutputType> const & output, const int n)
       {
+        DBG("process")
         m_layer10.m_input.middleCols(m_layer10.m_input_head, n).noalias() = m_rechannel_weights1 * input.leftCols(n);
 
         process_layer(input, m_head1, m_layer10, m_layer11, true, n);
@@ -123,7 +144,7 @@ namespace anna
        
         m_head2.leftCols(n).noalias() = m_head_rechannel_weights12 * m_head1.leftCols(n);
 
-        m_layer20.m_input.middleCols(m_layer20.m_input_head, n).noalias() = m_rechannel_weights2 * m_layer1a.m_input.middleCols(m_layer1a.m_input_head, n);
+        m_layer20.m_input.middleCols(m_layer20.m_input_head - n, n).noalias() = m_rechannel_weights2 * m_layer1a.m_input.middleCols(m_layer1a.m_input_head - n, n);
 
         process_layer(input, m_head2, m_layer20, m_layer21, true, n);
         process_layer(input, m_head2, m_layer21, m_layer22, true, n);

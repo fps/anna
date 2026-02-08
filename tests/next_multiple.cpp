@@ -4,6 +4,7 @@
 
 TEST(next_multiple, Simple)
 {
+  EXPECT_EQ(anna::next_multiple(10, 10), 10);
   EXPECT_EQ(anna::next_multiple(101, 10), 110);
   EXPECT_EQ(anna::next_multiple(4111, 4096), 8192);
   EXPECT_EQ(anna::next_multiple(17, 4096), 4096);

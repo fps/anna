@@ -9,6 +9,8 @@
 
 #include <iostream>
 
+#include <anna/log.hpp>
+
 namespace anna
 {
   static void *create_magic(const int number_of_pages, const int number_of_mirrored_pages, const char *name)
@@ -121,6 +123,7 @@ namespace anna
       if (0 != ret)
       {
         // TODO: What to do here? ;)
+        ERR("munmap returned non-null")
       }
     }
   };
