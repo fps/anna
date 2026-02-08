@@ -24,6 +24,11 @@ namespace anna
 
       static const int m_input_head = (KernelSize - 1) * Dilation + MaxBlockSize;
       static const int m_dilation = Dilation;
+
+      void advance_head(const int n)
+      {
+
+      }
     };
 
     template<typename T, int Channels, int MaxBlockSize>
