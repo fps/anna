@@ -11,7 +11,7 @@ else
 OPTFLAGS ?= -O3 -g3 -DNDEBUG -DEIGEN_NO_DEBUG -fno-trapping-math -fno-math-errno
 endif
 
-CXXFLAGS ?= -std=gnu++20 -Wall -Wdouble-promotion $(ARCHFLAGS) $(OPTFLAGS) -DANNA_PAGE_SIZE=${ANNA_PAGE_SIZE} -DEIGEN_NO_MALLOC -DEIGEN_INITIALIZE_MATRICES_BY_ZERO=1 -DEIGEN_NO_AUTOMATIC_RESIZING -DEIGEN_STACK_ALLOCATION_LIMIT=0 -I ${EIGEN_INCLUDE}  -I include `pkg-config nlohmann_json sndfile --cflags` -I vendored/vectorclass2
+CXXFLAGS ?= -std=gnu++20 -Wall -Wdouble-promotion $(ARCHFLAGS) $(OPTFLAGS) -DANNA_PAGE_SIZE=${ANNA_PAGE_SIZE} -DEIGEN_NO_MALLOC -DEIGEN_NO_AUTOMATIC_RESIZING -DEIGEN_STACK_ALLOCATION_LIMIT=0 -I ${EIGEN_INCLUDE}  -I include `pkg-config nlohmann_json sndfile --cflags` -I vendored/vectorclass2
 
 ifeq ($(COLOR),1)
 CXXFLAGS += -fdiagnostics-color=always

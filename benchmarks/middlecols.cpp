@@ -10,19 +10,15 @@ static inline void run(benchmark::State & state)
 
   Eigen::Matrix<float, 16, cols> m2;
   Eigen::Matrix<float, 16, 64> n2;
-  Eigen::Matrix<float, 16, 64> o2;
 
   Eigen::Matrix<float, 16, cols> m3;
   Eigen::Matrix<float, 16, 64> n3;
-  Eigen::Matrix<float, 16, 64> o3;
 
   Eigen::Matrix<float, 16, cols> m4;
   Eigen::Matrix<float, 16, 64> n4;
-  Eigen::Matrix<float, 16, 64> o4;
 
   Eigen::Matrix<float, 16, cols> m5;
   Eigen::Matrix<float, 16, 64> n5;
-  Eigen::Matrix<float, 16, 64> o5;
 
   for (auto _ : state)
   {
