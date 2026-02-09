@@ -1,5 +1,6 @@
 #include <benchmark/benchmark.h>
 #include <anna/conv1d.hpp>
+#include <anna/log.hpp>
 #include <Eigen/Core>
 
 template<typename T, int OutputChannels, int InputChannels, int MaxBlockSize, typename NextOpType>
@@ -20,6 +21,19 @@ struct linear
     }
   }
 
+  template<int n, typename ValueType>
+  inline void set(ValueType value)
+  {
+    if constexpr (0 == n)
+    {
+      m_matrix = value;
+    }
+    else
+    {
+      m_next_op.set(n - 1, value);
+    }
+  }  
+
   inline auto & end() { return m_next_op.end(); }
 
   inline auto & input() { return m_input; }
@@ -36,9 +50,22 @@ struct linear
 template<typename T, int Channels, typename NextOpType>
 struct vector_add
 {
-  Eigen::Vector<T, Channels> m_value;
+  Eigen::Vector<T, Channels> m_vector;
 
   NextOpType m_next_op;
+
+  template<int n, typename ValueType>
+  inline void set(ValueType value)
+  {
+    if constexpr (0 == n)
+    {
+      m_vector = value;
+    }
+    else
+    {
+      m_next_op.set(n - 1, value);
+    }
+  }  
 
   inline auto & end() { return m_next_op.end(); }
 
@@ -48,7 +75,7 @@ struct vector_add
 
   inline void process(const int n)
   {
-    m_next_op.input().middleCols(m_next_op.input_head() - n, n).colwise().noalias() += m_value;
+    m_next_op.input().middleCols(m_next_op.input_head() - n, n).colwise().noalias() += m_vector;
     m_next_op.process(n);
   }
 };
@@ -58,6 +85,15 @@ struct output
 {
   Eigen::Matrix<T, InputChannels, MaxBlockSize> m_input;
   static const int m_input_head = MaxBlockSize;
+
+  template<int n, typename ValueType>
+  inline void set(ValueType value)
+  {
+    if constexpr (0 == n)
+    {
+      ERR("output has no value to set()")
+    }
+  }  
 
   inline auto & end() { return *this; }
 
@@ -76,7 +112,26 @@ struct scalar_multiple
 {
   NextOpType m_next_op;
 
-  static constexpr T m_value = (T)Nominator/(T)Denominator;
+  T m_value = (T)Nominator/(T)Denominator;
+
+  scalar_multiple() :
+    m_value((T)Nominator/(T)Denominator)
+  {
+
+  }
+
+  template<int n, typename ValueType>
+  inline void set(ValueType value)
+  {
+    if constexpr (0 == n)
+    {
+      m_value = value;
+    }
+    else
+    {
+      m_next_op.set(n - 1, value);
+    }
+  }  
 
   inline auto & end() { return m_next_op.end(); }
 
@@ -100,15 +155,18 @@ static inline void run(benchmark::State & state)
   linear<float, Channels, Channels, 64, 
   linear<float, Channels, Channels, 64, 
   scalar_multiple<float, 17, 3, 
+  scalar_multiple<float, 1, 2, 
   linear<float, Channels, Channels, 64, 
   linear<float, Channels, Channels, 64, 
   linear<float, Channels, Channels, 64, 
   linear<float, Channels, Channels, 64, 
   linear<float, Channels, Channels, 64, 
   output<float, Channels, 64
-  >>>>>>>>>>>> net;
+  >>>>>>>>>>>>> net;
 
   net.m_input = Eigen::Matrix<float, Channels, 64>::Ones();
+
+  net.template set<0, Eigen::Matrix<float, Channels, Channels>>(Eigen::Matrix<float, Channels, Channels>::Zero());
 
   for (auto _ : state)
   {
