@@ -20,16 +20,15 @@ struct linear
     }
   }
 
-  auto & end() { return m_next_op.end(); }
+  inline auto & end() { return m_next_op.end(); }
 
-  auto & input() { return m_input; }
+  inline auto & input() { return m_input; }
 
-  int input_head() { return m_input_head; }
+  inline int input_head() { return m_input_head; }
 
   inline void process(const int n)
   {
     m_next_op.input().middleCols(m_next_op.input_head() - n, n).noalias() = m_matrix * m_input.middleCols(m_input_head - n, n);
-
     m_next_op.process(n);
   }
 };
@@ -41,11 +40,11 @@ struct vector_add
 
   NextOpType m_next_op;
 
-  auto & end() { return m_next_op.end(); }
+  inline auto & end() { return m_next_op.end(); }
 
-  auto & input() { return m_next_op.input(); }
+  inline auto & input() { return m_next_op.input(); }
 
-  int input_head() { return m_next_op.input_head(); }
+  inline int input_head() { return m_next_op.input_head(); }
 
   inline void process(const int n)
   {
@@ -60,11 +59,11 @@ struct output
   Eigen::Matrix<T, InputChannels, MaxBlockSize> m_input;
   static const int m_input_head = MaxBlockSize;
 
-  auto & end() { return *this; }
+  inline auto & end() { return *this; }
 
-  auto & input() { return m_input; }
+  inline auto & input() { return m_input; }
 
-  int input_head() { return m_input_head; }
+  inline int input_head() { return m_input_head; }
 
   inline void process(const int n)
   {
@@ -79,11 +78,11 @@ struct scalar_multiple
 
   static constexpr T m_value = (T)Nominator/(T)Denominator;
 
-  auto & end() { return m_next_op.end(); }
+  inline auto & end() { return m_next_op.end(); }
 
-  auto & input() { return m_next_op.input(); }
+  inline auto & input() { return m_next_op.input(); }
 
-  int input_head() { return m_next_op.input_head(); }
+  inline int input_head() { return m_next_op.input_head(); }
 
   inline void process(const int n)
   {
