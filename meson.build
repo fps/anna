@@ -13,3 +13,4 @@ includes = include_directories('include')
 
 subdir('tests')
 subdir('benchmarks')
+subdir('scratch')
