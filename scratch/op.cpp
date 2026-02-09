@@ -166,7 +166,7 @@ static inline void run(benchmark::State & state)
 
   net.m_input = Eigen::Matrix<float, Channels, 64>::Ones();
 
-  net.template set<0, Eigen::Matrix<float, Channels, Channels>>(Eigen::Matrix<float, Channels, Channels>::Zero());
+  net.template set<0>(Eigen::Matrix<float, Channels, Channels>::Zero());
 
   for (auto _ : state)
   {
