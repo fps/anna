@@ -15,7 +15,6 @@ namespace anna
     struct nam_wavenet_layer
     {
       static const int magic_cols = anna::next_multiple((KernelSize - 1) * Dilation + MaxBlockSize, ANNA_PAGE_SIZE / (Channels * sizeof(T)));
-      // Eigen::Matrix<T, Channels, (KernelSize-1) * Dilation + MaxBlockSize> m_input;
       anna::magic_matrix_machine<T, Channels, magic_cols> m_magic_matrix_machine;
       Eigen::Map<Eigen::Matrix<T, Channels, 2 * magic_cols>> m_input;
 
@@ -132,30 +131,30 @@ namespace anna
         m_layer10.m_input.middleCols(m_layer10.m_input_head, n).noalias() = m_rechannel_weights1 * input.leftCols(n);
 
         process_layer(input, m_head1, m_layer10, m_layer11, true, n);
-        process_layer(input, m_head1, m_layer11, m_layer12, true, n);
-        process_layer(input, m_head1, m_layer12, m_layer13, true, n);
-        process_layer(input, m_head1, m_layer13, m_layer14, true, n);
-        process_layer(input, m_head1, m_layer14, m_layer15, true, n);
-        process_layer(input, m_head1, m_layer15, m_layer16, true, n);
-        process_layer(input, m_head1, m_layer16, m_layer17, true, n);
-        process_layer(input, m_head1, m_layer17, m_layer18, true, n);
-        process_layer(input, m_head1, m_layer18, m_layer19, true, n);
-        process_layer(input, m_head1, m_layer19, m_layer1a, true, n);
+        process_layer(input, m_head1, m_layer11, m_layer12, false, n);
+        process_layer(input, m_head1, m_layer12, m_layer13, false, n);
+        process_layer(input, m_head1, m_layer13, m_layer14, false, n);
+        process_layer(input, m_head1, m_layer14, m_layer15, false, n);
+        process_layer(input, m_head1, m_layer15, m_layer16, false, n);
+        process_layer(input, m_head1, m_layer16, m_layer17, false, n);
+        process_layer(input, m_head1, m_layer17, m_layer18, false, n);
+        process_layer(input, m_head1, m_layer18, m_layer19, false, n);
+        process_layer(input, m_head1, m_layer19, m_layer1a, false, n);
        
         m_head2.leftCols(n).noalias() = m_head_rechannel_weights12 * m_head1.leftCols(n);
 
         m_layer20.m_input.middleCols(m_layer20.m_input_head - n, n).noalias() = m_rechannel_weights2 * m_layer1a.m_input.middleCols(m_layer1a.m_input_head - n, n);
 
-        process_layer(input, m_head2, m_layer20, m_layer21, true, n);
-        process_layer(input, m_head2, m_layer21, m_layer22, true, n);
-        process_layer(input, m_head2, m_layer22, m_layer23, true, n);
-        process_layer(input, m_head2, m_layer23, m_layer24, true, n);
-        process_layer(input, m_head2, m_layer24, m_layer25, true, n);
-        process_layer(input, m_head2, m_layer25, m_layer26, true, n);
-        process_layer(input, m_head2, m_layer26, m_layer27, true, n);
-        process_layer(input, m_head2, m_layer27, m_layer28, true, n);
-        process_layer(input, m_head2, m_layer28, m_layer29, true, n);
-        process_layer(input, m_head2, m_layer29, m_layer2a, true, n);
+        process_layer(input, m_head2, m_layer20, m_layer21, false, n);
+        process_layer(input, m_head2, m_layer21, m_layer22, false, n);
+        process_layer(input, m_head2, m_layer22, m_layer23, false, n);
+        process_layer(input, m_head2, m_layer23, m_layer24, false, n);
+        process_layer(input, m_head2, m_layer24, m_layer25, false, n);
+        process_layer(input, m_head2, m_layer25, m_layer26, false, n);
+        process_layer(input, m_head2, m_layer26, m_layer27, false, n);
+        process_layer(input, m_head2, m_layer27, m_layer28, false, n);
+        process_layer(input, m_head2, m_layer28, m_layer29, false, n);
+        process_layer(input, m_head2, m_layer29, m_layer2a, false, n);
 
         const_cast<Eigen::MatrixBase<OutputType>&>(output).leftCols(n).noalias() = m_head_rechannel_weights2 * m_head2.leftCols(n);
         const_cast<Eigen::MatrixBase<OutputType>&>(output).leftCols(n).colwise() += m_head_rechannel_bias2;

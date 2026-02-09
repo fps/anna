@@ -1,0 +1,1 @@
+executable('nam_wavenet', 'nam_wavenet.cpp', include_directories : includes, dependencies : benchmark)
