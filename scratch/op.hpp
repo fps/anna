@@ -26,9 +26,9 @@ namespace anna
 
       conv1d() :
         m_input(m_magic_matrix_machine.get_map()),
-        m_input_head(0)
+        m_input_head(magic_cols)
       {
-
+        DBG("magic_cols: " << magic_cols)
       }
 
       template<int n, typename ValueType>
@@ -53,6 +53,7 @@ namespace anna
       inline void process(const int n)
       {
         // m_next_op.input().middleCols(m_next_op.input_head(), n).noalias() = m_matrix * m_input.middleCols(m_input_head, n);
+        anna::conv1d(m_weights, Dilation, m_input, m_next_op.input(), n, m_input_head, m_next_op.input_head());
         m_next_op.process(n);
       }
     };
@@ -174,7 +175,7 @@ namespace anna
     
       inline void process(const int n)
       {
-        m_next_op.input().middleCols(m_next_op.input_head(), n).colwise().noalias() += m_vector;
+        m_next_op.input().middleCols(m_next_op.input_head(), n).colwise() += m_vector;
         m_next_op.process(n);
       }
     };
@@ -200,10 +201,7 @@ namespace anna
     
       inline int input_head() { return m_input_head; }
     
-      inline void process(const int n)
-      {
-        // NO OP 
-      }
+      inline void process(const int n) { /* NO OP */ }
     };
     
     template<typename T, int Nominator, int Denominator, typename NextOpType>

@@ -1,5 +1,4 @@
 #include <benchmark/benchmark.h>
-#include <anna/conv1d.hpp>
 #include <anna/log.hpp>
 #include <Eigen/Core>
 
@@ -8,22 +7,20 @@
 using namespace anna::op;
 
 template<int Channels>
-static inline void run(benchmark::State & state)
+static inline void run_linear10(benchmark::State & state)
 {
   linear1<float, Channels, 64, 
   linear1<float, Channels, 64, 
   linear1<float, Channels, 64, 
   linear1<float, Channels, 64, 
   linear1<float, Channels, 64, 
-  scalar_multiple<float, 17, 3, 
-  scalar_multiple<float, 1, 2, 
   linear1<float, Channels, 64, 
   linear1<float, Channels, 64, 
   linear1<float, Channels, 64, 
   linear1<float, Channels, 64, 
   linear1<float, Channels, 64, 
   output<float, Channels, 64
-  >>>>>>>>>>>>> net;
+  >>>>>>>>>>> net;
 
   net.m_input = Eigen::Matrix<float, Channels, 64>::Ones();
 
@@ -40,10 +37,69 @@ static inline void run(benchmark::State & state)
   // std::cout << net.end().m_input;
 }
 
+template<int Channels>
+static inline void run_linear3(benchmark::State & state)
+{
+  linear1<float, Channels, 64, 
+  linear1<float, Channels, 64, 
+  linear1<float, Channels, 64, 
+  output<float, Channels, 64
+  >>>> net;
+
+  Eigen::Matrix<float, Channels, 64> input = Eigen::Matrix<float, Channels, 64>::Zero();
+
+  for (auto _ : state)
+  {
+    for (int index = 0; index < 750; ++index)
+    {
+      process(net, input, 64);
+    }
+  }
+}
+   
+
+template<int Channels>
+static inline void run_conv1d_bias(benchmark::State & state)
+{
+  conv1d<float, Channels, Channels, 3, 1024, 64, 
+  vector_add<float, Channels, 
+  output<float, Channels, 64
+  >>> net;  
+
+  Eigen::Matrix<float, Channels, 64> input = Eigen::Matrix<float, Channels, 64>::Zero();
+
+  for (auto _ : state)
+  {
+    for (int index = 0; index < 750; ++index)
+    {
+      process(net, input, 64);
+    }
+  }
+}
+
+template<int Channels>
+static inline void run_conv1d(benchmark::State & state)
+{
+  conv1d<float, Channels, Channels, 3, 1024, 64, 
+  output<float, Channels, 64
+  >> net;  
+
+  Eigen::Matrix<float, Channels, 64> input = Eigen::Matrix<float, Channels, 64>::Zero();
+
+  for (auto _ : state)
+  {
+    for (int index = 0; index < 750; ++index)
+    {
+      process(net, input, 64);
+    }
+  }
+}
+
 typedef int channels;
 
-BENCHMARK(run<(channels)8>);
-BENCHMARK(run<(channels)16>);
-BENCHMARK(run<(channels)32>);
+BENCHMARK(run_conv1d<(channels)16>);
+BENCHMARK(run_conv1d_bias<(channels)16>);
+BENCHMARK(run_linear3<(channels)16>);
+BENCHMARK(run_linear10<(channels)16>);
 
 BENCHMARK_MAIN();
