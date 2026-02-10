@@ -36,13 +36,13 @@ struct linear1
 
   inline auto & end() { return m_next_op.end(); }
 
-  inline auto & input() { return m_next_op.input(); }
+  inline auto & input() { return m_input; }
 
-  inline int input_head() { return m_next_op.input_head(); }
+  inline int input_head() { return m_input_head; }
 
   inline void process(const int n)
   {
-    input().middleCols(m_next_op.input_head(), n) = m_matrix * input().middleCols(m_input_head, n);
+    m_next_op.input().middleCols(m_next_op.input_head(), n).noalias() = m_matrix * m_input.middleCols(m_input_head, n);
     m_next_op.process(n);
   }
 };
