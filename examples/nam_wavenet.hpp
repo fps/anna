@@ -46,7 +46,7 @@ namespace anna
     struct output
     {
       Eigen::Matrix<T, Channels, MaxBlockSize> m_input;
-      static const int m_input_head = MaxBlockSize;
+      static const int m_input_head = 0;
 
       inline void advance_head(const int n)
       {
@@ -106,19 +106,19 @@ namespace anna
         Eigen::MatrixBase<HeadType> &head = const_cast<Eigen::MatrixBase<HeadType>&>(const_head);
         anna::conv1d(layer.m_dilated_weights, layer.m_dilated_bias, layer.m_dilation, layer.m_input, next_layer.m_input, n, layer.m_input_head, next_layer.m_input_head);
 
-        next_layer.m_input.middleCols(next_layer.m_input_head - n, n).noalias() += layer.m_input_mixer_weights * input.leftCols(n);
+        next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() += layer.m_input_mixer_weights * input.leftCols(n);
 
-        anna::inplace_eigen_fast_tanh(next_layer.m_input.middleCols(next_layer.m_input_head - n, n));
+        anna::inplace_eigen_fast_tanh(next_layer.m_input.middleCols(next_layer.m_input_head, n));
 
-        next_layer.m_input.middleCols(next_layer.m_input_head - n, n).noalias() += layer.m_linear_weights * layer.m_input.leftCols(n);
+        next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() += layer.m_linear_weights * layer.m_input.leftCols(n);
 
         if (true == first)
         {
-          head.leftCols(n).noalias() = next_layer.m_input.middleCols(next_layer.m_input_head - n, n);
+          head.leftCols(n).noalias() = next_layer.m_input.middleCols(next_layer.m_input_head, n);
         }
         else
         {
-          head.leftCols(n).noalias() += next_layer.m_input.middleCols(next_layer.m_input_head - n, n);
+          head.leftCols(n).noalias() += next_layer.m_input.middleCols(next_layer.m_input_head, n);
         }
 
         layer.advance_head(n);

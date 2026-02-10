@@ -3,16 +3,60 @@
 #include <anna/log.hpp>
 #include <Eigen/Core>
 
-template<typename T, int OutputChannels, int InputChannels, int MaxBlockSize, typename NextOpType>
-struct linear
+template<typename T, int Channels, int MaxBlockSize, typename NextOpType>
+struct linear1
 {
-  Eigen::Matrix<T, InputChannels, MaxBlockSize> m_input;
-  Eigen::Matrix<T, OutputChannels, InputChannels> m_matrix;
-  static const int m_input_head = MaxBlockSize;
+  Eigen::Matrix<T, Channels, MaxBlockSize> m_input;
+  Eigen::Matrix<T, Channels, Channels> m_matrix;
+  static const int m_input_head = 0;
 
   NextOpType m_next_op;
 
-  linear() :
+  linear1() :
+    m_matrix(Eigen::Matrix<T, Channels, Channels>::Zero())
+  {
+    for (int index = 0; index < Channels; ++index)
+    {
+      m_matrix(index, index) = 1;
+    }
+  }
+
+  template<int n, typename ValueType>
+  inline void set(ValueType value)
+  {
+    if constexpr (0 == n)
+    {
+      m_matrix = value;
+    }
+    else
+    {
+      m_next_op.set(n - 1, value);
+    }
+  }  
+
+  inline auto & end() { return m_next_op.end(); }
+
+  inline auto & input() { return m_next_op.input(); }
+
+  inline int input_head() { return m_next_op.input_head(); }
+
+  inline void process(const int n)
+  {
+    input().middleCols(m_next_op.input_head(), n) = m_matrix * input().middleCols(m_input_head, n);
+    m_next_op.process(n);
+  }
+};
+
+template<typename T, int OutputChannels, int InputChannels, int MaxBlockSize, typename NextOpType>
+struct linear2
+{
+  Eigen::Matrix<T, InputChannels, MaxBlockSize> m_input;
+  Eigen::Matrix<T, OutputChannels, InputChannels> m_matrix;
+  static const int m_input_head = 0;
+
+  NextOpType m_next_op;
+
+  linear2() :
     m_matrix(Eigen::Matrix<T, OutputChannels, InputChannels>::Zero())
   {
     for (int index = 0; index < std::min(InputChannels, OutputChannels); ++index)
@@ -42,10 +86,11 @@ struct linear
 
   inline void process(const int n)
   {
-    m_next_op.input().middleCols(m_next_op.input_head() - n, n).noalias() = m_matrix * m_input.middleCols(m_input_head - n, n);
+    m_next_op.input().middleCols(m_next_op.input_head(), n).noalias() = m_matrix * m_input.middleCols(m_input_head, n);
     m_next_op.process(n);
   }
 };
+
 
 template<typename T, int Channels, typename NextOpType>
 struct vector_add
@@ -75,7 +120,7 @@ struct vector_add
 
   inline void process(const int n)
   {
-    m_next_op.input().middleCols(m_next_op.input_head() - n, n).colwise().noalias() += m_vector;
+    m_next_op.input().middleCols(m_next_op.input_head(), n).colwise().noalias() += m_vector;
     m_next_op.process(n);
   }
 };
@@ -84,7 +129,7 @@ template<typename T, int InputChannels, int MaxBlockSize>
 struct output
 {
   Eigen::Matrix<T, InputChannels, MaxBlockSize> m_input;
-  static const int m_input_head = MaxBlockSize;
+  static const int m_input_head = 0;
 
   template<int n, typename ValueType>
   inline void set(ValueType value)
@@ -141,7 +186,7 @@ struct scalar_multiple
 
   inline void process(const int n)
   {
-    m_next_op.input().middleCols(m_next_op.input_head() - n, n).array() *= m_value;
+    m_next_op.input().middleCols(m_next_op.input_head(), n).array() *= m_value;
     m_next_op.process(n);
   }
 };
@@ -149,18 +194,18 @@ struct scalar_multiple
 template<int Channels>
 static inline void run(benchmark::State & state)
 {
-  linear<float, Channels, Channels, 64, 
-  linear<float, Channels, Channels, 64, 
-  linear<float, Channels, Channels, 64, 
-  linear<float, Channels, Channels, 64, 
-  linear<float, Channels, Channels, 64, 
+  linear1<float, Channels, 64, 
+  linear1<float, Channels, 64, 
+  linear1<float, Channels, 64, 
+  linear1<float, Channels, 64, 
+  linear1<float, Channels, 64, 
   scalar_multiple<float, 17, 3, 
   scalar_multiple<float, 1, 2, 
-  linear<float, Channels, Channels, 64, 
-  linear<float, Channels, Channels, 64, 
-  linear<float, Channels, Channels, 64, 
-  linear<float, Channels, Channels, 64, 
-  linear<float, Channels, Channels, 64, 
+  linear1<float, Channels, 64, 
+  linear1<float, Channels, 64, 
+  linear1<float, Channels, 64, 
+  linear1<float, Channels, 64, 
+  linear1<float, Channels, 64, 
   output<float, Channels, 64
   >>>>>>>>>>>>> net;
 
@@ -179,8 +224,10 @@ static inline void run(benchmark::State & state)
   // std::cout << net.end().m_input;
 }
 
-BENCHMARK(run<8>);
-BENCHMARK(run<16>);
-BENCHMARK(run<32>);
+typedef int channels;
+
+BENCHMARK(run<(channels)8>);
+BENCHMARK(run<(channels)16>);
+BENCHMARK(run<(channels)32>);
 
 BENCHMARK_MAIN();

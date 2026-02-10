@@ -9,7 +9,7 @@ page_size = run_command('getconf', 'PAGE_SIZE', check : true).stdout().strip()
 add_global_arguments('-DANNA_PAGE_SIZE=' + page_size, language : 'cpp')
 add_global_arguments('-DEIGEN_STACK_ALLOCATION_LIMIT=0', language : 'cpp')
 
-includes = include_directories('include')
+includes = include_directories('.', 'include')
 
 subdir('tests')
 subdir('benchmarks')

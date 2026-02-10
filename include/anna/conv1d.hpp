@@ -12,10 +12,10 @@ namespace anna
     constexpr int KernelSize = weights.size();
     Eigen::MatrixBase<OutputType> & output = const_cast<Eigen::MatrixBase<OutputType> &>(const_output);
 
-    output.middleCols(output_head - n, n).noalias() = weights[0] * input.middleCols(input_head - ((KernelSize - 1) * dilation + n), n);
+    output.middleCols(output_head, n).noalias() = weights[0] * input.middleCols(input_head - ((KernelSize - 1) * dilation + n), n);
     for (int k = 1; k < KernelSize; ++k)
     {
-      output.middleCols(output_head - n, n).noalias() += weights[k] * input.middleCols(input_head - ((KernelSize - k - 1) * dilation + n), n);
+      output.middleCols(output_head, n).noalias() += weights[k] * input.middleCols(input_head - ((KernelSize - k - 1) * dilation + n), n);
     }
   }
   
@@ -25,7 +25,7 @@ namespace anna
     conv1d(weights, dilation, input, const_output, n, input_head, output_head);
 
     Eigen::MatrixBase<OutputType> & output = const_cast<Eigen::MatrixBase<OutputType> &>(const_output);
-    output.middleCols(output_head - n, n).colwise() += bias;
+    output.middleCols(output_head, n).colwise() += bias;
   }
 } // namespace
 
