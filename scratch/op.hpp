@@ -195,6 +195,13 @@ namespace anna
         m_next_op.process(n);
       }
     };
+
+    template<typename OpType, typename InputType>
+    static inline void process(OpType & op, Eigen::MatrixBase<InputType> const & input, const int n)
+    {
+      op.input().middleCols(op.input_head(), n) = input;
+      op.process(n);
+    }
   }
 }
 
