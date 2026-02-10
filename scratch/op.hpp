@@ -2,12 +2,61 @@
 
 #include <anna/conv1d.hpp>
 #include <anna/log.hpp>
+#include <anna/magic.hpp>
+#include <anna/next_multiple.hpp>
+
 #include <Eigen/Core>
 
 namespace anna
 {
   namespace op
   {
+    template<typename T, int OutputChannels, int InputChannels, int KernelSize, int Dilation, int MaxBlockSize, typename NextOpType>
+    struct conv1d
+    {
+      std::array<Eigen::Matrix<T, OutputChannels, InputChannels>, KernelSize> m_weights;
+
+      static const int magic_cols = anna::next_multiple((KernelSize - 1) * Dilation + MaxBlockSize, ANNA_PAGE_SIZE / (InputChannels * sizeof(T)));
+      anna::magic_matrix_machine<T, InputChannels, magic_cols> m_magic_matrix_machine;
+      Eigen::Map<Eigen::Matrix<T, InputChannels, 2 * magic_cols>> m_input;
+
+      int m_input_head;
+
+      NextOpType m_next_op;
+
+      conv1d() :
+        m_input(m_magic_matrix_machine.get_map()),
+        m_input_head(0)
+      {
+
+      }
+
+      template<int n, typename ValueType>
+      inline void set(ValueType value)
+      {
+        if constexpr (0 == n)
+        {
+          m_weights = value;
+        }
+        else
+        {
+          m_next_op.template set<n-1>(value);
+        }
+      }  
+    
+      inline auto & end() { return m_next_op.end(); }
+    
+      inline auto & input() { return m_input; }
+    
+      inline int input_head() { return m_input_head; }
+    
+      inline void process(const int n)
+      {
+        // m_next_op.input().middleCols(m_next_op.input_head(), n).noalias() = m_matrix * m_input.middleCols(m_input_head, n);
+        m_next_op.process(n);
+      }
+    };
+
     template<typename T, int Channels, int MaxBlockSize, typename NextOpType>
     struct linear1
     {
