@@ -1,6 +1,5 @@
 #pragma once
 
-#include <benchmark/benchmark.h>
 #include <anna/conv1d.hpp>
 #include <anna/log.hpp>
 #include <Eigen/Core>
@@ -36,7 +35,7 @@ namespace anna
         }
         else
         {
-          m_next_op.set(n - 1, value);
+          m_next_op.template set<n-1>(value);
         }
       }  
     
@@ -80,7 +79,7 @@ namespace anna
         }
         else
         {
-          m_next_op.set(n - 1, value);
+          m_next_op.template set<n - 1>(value);
         }
       }  
     
@@ -114,7 +113,7 @@ namespace anna
         }
         else
         {
-          m_next_op.set(n - 1, value);
+          m_next_op.template set<n - 1>(value);
         }
       }  
     
@@ -180,7 +179,7 @@ namespace anna
         }
         else
         {
-          m_next_op.set(n - 1, value);
+          m_next_op.template set<n-1>(value);
         }
       }  
     
