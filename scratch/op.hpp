@@ -4,6 +4,7 @@
 #include <anna/log.hpp>
 #include <anna/magic.hpp>
 #include <anna/next_multiple.hpp>
+#include <anna/tanh.hpp>
 
 #include <Eigen/Core>
 
@@ -54,6 +55,37 @@ namespace anna
       {
         // m_next_op.input().middleCols(m_next_op.input_head(), n).noalias() = m_matrix * m_input.middleCols(m_input_head, n);
         anna::conv1d(m_weights, Dilation, m_input, m_next_op.input(), n, m_input_head, m_next_op.input_head());
+        m_next_op.process(n);
+      }
+    };
+
+    template<typename NextOpType>
+    struct tanh
+    {
+      NextOpType m_next_op;
+      
+      template<int n, typename ValueType>
+      inline void set(ValueType value)
+      {
+        if constexpr (0 == n)
+        {
+          ERR("tanh has no parameters")
+        }
+        else
+        {
+          m_next_op.template set<n-1>(value);
+        }
+      }  
+
+      inline auto & end() { return m_next_op.end(); }
+    
+      inline auto & input() { return m_next_op.input(); }
+    
+      inline int input_head() { return m_next_op.input_head(); }
+    
+      inline void process(const int n)
+      {
+        anna::inplace_eigen_fast_tanh(m_next_op.input().middleCols(m_next_op.input_head(), n));
         m_next_op.process(n);
       }
     };
