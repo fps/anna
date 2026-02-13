@@ -2,7 +2,7 @@
 #include <anna/log.hpp>
 #include <Eigen/Core>
 
-#include <scratch/op.hpp>
+#include <anna/op.hpp>
 
 using namespace anna::op;
 
@@ -80,6 +80,7 @@ static inline void run_conv1d_bias(benchmark::State & state)
 template<int Channels>
 static inline void run_conv1d_bias20(benchmark::State & state)
 {
+  linear2<float, Channels, 1, 64,
   conv1d<float, Channels, Channels, 3, (1 << 0), 64, 
   vector_add<float, Channels, 
   anna::op::tanh<
@@ -140,10 +141,11 @@ static inline void run_conv1d_bias20(benchmark::State & state)
   conv1d<float, Channels, Channels, 3, 1 << 9, 64, 
   vector_add<float, Channels, 
   anna::op::tanh<
-  output<float, Channels, 64
-  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> net;  
+  linear2<float, 1, Channels, 64, 
+  output<float, 1, 64
+  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> net;  
 
-  Eigen::Matrix<float, Channels, 64> input = Eigen::Matrix<float, Channels, 64>::Zero();
+  Eigen::Matrix<float, 1, 64> input = Eigen::Matrix<float, 1, 64>::Zero();
 
   for (auto _ : state)
   {
