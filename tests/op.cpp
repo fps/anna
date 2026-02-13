@@ -48,7 +48,7 @@ TEST(op, linear)
 
 TEST(op, conv1d)
 {
-  conv1d<float, 1, 1, 3, 1024, 64,
+  conv1d<float, 1, 1, 3, 999, 64,
   output<float, 1, 64
   >> net;
 
@@ -71,6 +71,6 @@ TEST(op, conv1d)
   }
 
   Eigen::Matrix<float, 1, 48000> expected_output = Eigen::Matrix<float, 1, 48000>::Zero();
-  expected_output(0, 24000 + 1024) = 1;
+  expected_output(0, 24000 + 999) = 1;
   EXPECT_TRUE(output.isApprox(expected_output));
 }
