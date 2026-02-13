@@ -27,7 +27,7 @@ namespace anna
 
       conv1d() :
         m_input(m_magic_matrix_machine.get_map()),
-        m_input_head(magic_cols)
+        m_input_head((KernelSize - 1) * Dilation)
       {
         DBG("magic_cols: " << magic_cols)
       }
@@ -53,8 +53,13 @@ namespace anna
     
       inline void process(const int n)
       {
-        // m_next_op.input().middleCols(m_next_op.input_head(), n).noalias() = m_matrix * m_input.middleCols(m_input_head, n);
+        DBG("input_head: " << m_input_head)
         anna::conv1d(m_weights, Dilation, m_input, m_next_op.input(), n, m_input_head, m_next_op.input_head());
+        m_input_head += n;
+        if (m_input_head % magic_cols >= (KernelSize - 1) * Dilation)
+        {
+          m_input_head %= magic_cols;
+        }
         m_next_op.process(n);
       }
     };

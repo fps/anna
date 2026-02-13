@@ -3,7 +3,7 @@
 
 using namespace anna::op;
 
-TEST(anna, conv1d) 
+TEST(op, linear) 
 {
   Eigen::Matrix<float, 3, 3> m1;
   m1 << 
@@ -46,3 +46,31 @@ TEST(anna, conv1d)
   EXPECT_TRUE(net.end().m_input.isApprox(true_output));
 }
 
+TEST(op, conv1d)
+{
+  conv1d<float, 1, 1, 3, 1024, 64,
+  output<float, 1, 64
+  >> net;
+
+  std::array<Eigen::Matrix<float, 1, 1>, 3> weights;
+  std::get<0>(weights)(0, 0) = 0;
+  std::get<1>(weights)(0, 0) = 1;
+  std::get<2>(weights)(0, 0) = 0;
+
+  net.set<0>(weights);
+
+  Eigen::Matrix<float, 1, 48000> input = Eigen::Matrix<float, 1, 48000>::Zero();
+  input(0, 24000) = 1;
+  Eigen::Matrix<float, 1, 48000> output;
+
+  for (int index = 0; index < 750; ++index)
+  {
+    process(net, input.middleCols(64 * index, 64), 64);
+    // std::cout << net.end().input() << "\n";
+    output.middleCols(64 * index, 64) = net.end().input();
+  }
+
+  Eigen::Matrix<float, 1, 48000> expected_output = Eigen::Matrix<float, 1, 48000>::Zero();
+  expected_output(0, 24000 + 1024) = 1;
+  EXPECT_TRUE(output.isApprox(expected_output));
+}
