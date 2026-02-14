@@ -295,13 +295,15 @@ namespace anna
     };
 
     template<typename T, int OutputChannels, int InputChannels, int KernelSize, int Dilation, int MaxBlockSize, typename NextOpType>
-    struct conv1d1_bias_tanh
+    struct conv1d_bias_tanh
     {
       conv1d<T, OutputChannels, InputChannels, KernelSize, Dilation, MaxBlockSize,
-      vector_add<T, OutputChannels,
-      tanh<
-      NextOpType
-      >>> m_op;
+        vector_add<T, OutputChannels,
+          tanh<
+            NextOpType
+          >
+        >
+      > m_op;
 
       template<int n, typename ValueType>
       inline void set(ValueType value)
@@ -325,11 +327,18 @@ namespace anna
     
       inline int input_head() { return m_op.input_head(); }
     
-      inline void process(const int n)
-      {
-        m_op.process(n);
-      }
+      inline void process(const int n) { m_op.process(n); }
     };
+
+    template<typename T, int OutputChannels, int InputChannels, int KernelSize, int Dilation, int MaxBlockSize, typename NextOpType>
+    using conv1d_bias_tanh2 = conv1d<T, OutputChannels, InputChannels, KernelSize, Dilation, MaxBlockSize,
+        vector_add<T, OutputChannels,
+          tanh<
+            NextOpType
+          >
+        >
+      >;
+    
 
     template<typename OpType, typename InputType>
     static inline void process(OpType & op, Eigen::MatrixBase<InputType> const & input, const int n)
