@@ -191,7 +191,6 @@ namespace anna
       }
     };
     
-    
     template<typename T, int Channels, typename NextOpType>
     struct vector_add
     {
@@ -338,7 +337,6 @@ namespace anna
           >
         >
       >;
-    
 
     template<typename OpType, typename InputType>
     static inline void process(OpType & op, Eigen::MatrixBase<InputType> const & input, const int n)
