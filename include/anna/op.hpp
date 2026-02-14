@@ -280,6 +280,21 @@ namespace anna
       }
     };
 
+    template<typename T, int OutputChannels, int InputChannels, int KernelSize, int Dilation, int MaxBlockSize, typename NextOpType>
+    struct conv1d1_bias_tanh
+    {
+      conv1d<T, OutputChannels, InputChannels, KernelSize, Dilation, MaxBlockSize,
+      vector_add<T, OutputChannels,
+      tanh<
+      NextOpType
+      >>> m_op;
+
+      auto end()
+      {
+        return m_op.end();
+      }
+    };
+
     template<typename OpType, typename InputType>
     static inline void process(OpType & op, Eigen::MatrixBase<InputType> const & input, const int n)
     {

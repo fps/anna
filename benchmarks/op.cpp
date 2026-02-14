@@ -179,6 +179,7 @@ typedef int channels;
 BENCHMARK(run_conv1d<(channels)16>);
 BENCHMARK(run_conv1d_bias<(channels)16>);
 BENCHMARK(run_conv1d_bias20<(channels)16>);
+BENCHMARK(run_conv1d_bias20<(channels)32>);
 BENCHMARK(run_linear3<(channels)16>);
 BENCHMARK(run_linear10<(channels)16>);
 
