@@ -45,6 +45,8 @@ namespace anna
         }
       }  
     
+      inline auto & next() { return m_next_op; }
+
       inline auto & end() { return m_next_op.end(); }
     
       inline auto & input() { return m_input; }
@@ -81,6 +83,8 @@ namespace anna
           m_next_op.template set<n-1>(value);
         }
       }  
+
+      inline auto & next() { return m_next_op; }
 
       inline auto & end() { return m_next_op.end(); }
     
@@ -126,6 +130,8 @@ namespace anna
         }
       }  
     
+      inline auto & next() { return m_next_op; }
+
       inline auto & end() { return m_next_op.end(); }
     
       inline auto & input() { return m_input; }
@@ -170,6 +176,8 @@ namespace anna
         }
       }  
     
+      inline auto & next() { return m_next_op; }
+
       inline auto & end() { return m_next_op.end(); }
     
       inline auto & input() { return m_input; }
@@ -204,6 +212,8 @@ namespace anna
         }
       }  
     
+      inline auto & next() { return m_next_op; }
+
       inline auto & end() { return m_next_op.end(); }
     
       inline auto & input() { return m_next_op.input(); }
@@ -232,6 +242,8 @@ namespace anna
         }
       }  
     
+      inline auto & next() { return *this; }
+
       inline auto & end() { return *this; }
     
       inline auto & input() { return m_input; }
@@ -267,6 +279,8 @@ namespace anna
         }
       }  
     
+      inline auto & next() { return m_next_op; }
+
       inline auto & end() { return m_next_op.end(); }
     
       inline auto & input() { return m_next_op.input(); }
@@ -289,7 +303,23 @@ namespace anna
       NextOpType
       >>> m_op;
 
-      auto end() { return m_op.end(); }
+      template<int n, typename ValueType>
+      inline void set(ValueType value)
+      {
+        if constexpr (0 == n)
+        {
+          m_op.set(0, std::get<0>(value));
+          m_op.next().set(0, std::get<1>(value));
+        }
+        else
+        {
+          m_op.next().next().next().template set<n-1>(value);
+        }
+      }  
+
+      inline auto & next() { return m_op.next().next().next(); }
+
+      inline auto & end() { return m_op.end(); }
 
       inline auto & input() { return m_op.input(); }
     
