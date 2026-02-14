@@ -289,9 +289,15 @@ namespace anna
       NextOpType
       >>> m_op;
 
-      auto end()
+      auto end() { return m_op.end(); }
+
+      inline auto & input() { return m_op.input(); }
+    
+      inline int input_head() { return m_op.input_head(); }
+    
+      inline void process(const int n)
       {
-        return m_op.end();
+        m_op.process(n);
       }
     };
 
