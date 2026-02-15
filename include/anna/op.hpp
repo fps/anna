@@ -12,6 +12,47 @@ namespace anna
 {
   namespace op
   {
+    // Curiously Recurring Template Pattern
+    template<typename DerivedType, typename NextOpType>
+    struct crtp
+    {
+      NextOpType m_next_op;
+  
+      // In this base implementation we just forward everything to m_next_op
+      inline auto & end() { return m_next_op.end(); }
+
+      inline auto & next() { return m_next_op; }
+
+      inline auto & input() { return m_next_op.input(); }
+
+      inline int input_head() { return m_next_op.input_head(); }
+
+      template<int n, typename ValueType>
+      inline void set(const ValueType & value) 
+      { 
+        if constexpr (0 == n)
+        {
+          ERR("crtp has no parameters") 
+        }
+        else
+        {
+          m_next_op.template set<n-1>(value);
+        }
+      }
+    };
+
+    template<typename NextOpType>
+    struct tanh : public crtp<tanh<NextOpType>, NextOpType>
+    {
+      typedef crtp<tanh<NextOpType>, NextOpType> crtp_type;
+
+      inline void process(const int n)
+      {
+        anna::inplace_eigen_fast_tanh(crtp_type::m_next_op.input().middleCols(crtp_type::m_next_op.input_head(), n));
+        crtp_type::m_next_op.process(n);
+      }
+    };
+
     template<typename T, int OutputChannels, int InputChannels, int KernelSize, int Dilation, int MaxBlockSize, typename NextOpType>
     struct conv1d
     {
@@ -66,38 +107,6 @@ namespace anna
       }
     };
 
-    template<typename NextOpType>
-    struct tanh
-    {
-      NextOpType m_next_op;
-      
-      template<int n, typename ValueType>
-      inline void set(ValueType value)
-      {
-        if constexpr (0 == n)
-        {
-          ERR("tanh has no parameters")
-        }
-        else
-        {
-          m_next_op.template set<n-1>(value);
-        }
-      }  
-
-      inline auto & next() { return m_next_op; }
-
-      inline auto & end() { return m_next_op.end(); }
-    
-      inline auto & input() { return m_next_op.input(); }
-    
-      inline int input_head() { return m_next_op.input_head(); }
-    
-      inline void process(const int n)
-      {
-        anna::inplace_eigen_fast_tanh(m_next_op.input().middleCols(m_next_op.input_head(), n));
-        m_next_op.process(n);
-      }
-    };
 
     template<typename T, int Channels, int MaxBlockSize, typename NextOpType>
     struct linear1
@@ -337,6 +346,12 @@ namespace anna
           >
         >
       >;
+
+    template<typename T, int OutputChannels, int InputChannels, int KernelSize, int NumDilations, int MaxBlockSize, typename NextOpType>
+    struct dilated_conv1d_bias_tanh
+    {
+      
+    }; 
 
     template<typename OpType, typename InputType>
     static inline void process(OpType & op, Eigen::MatrixBase<InputType> const & input, const int n)
