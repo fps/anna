@@ -74,3 +74,14 @@ TEST(op, conv1d)
   expected_output(0, 24000 + 999) = 1;
   EXPECT_TRUE(output.isApprox(expected_output));
 }
+
+TEST(op, crtp)
+{
+  linear1<float, 16, 64, 
+  anna::op::tanh<
+  linear1<float, 16, 64, 
+  output<float, 16, 64
+  >>>> net;
+  net.set<2>(Eigen::Matrix<float, 16, 16>::Ones());
+  net.set<1>(1);
+}

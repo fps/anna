@@ -18,7 +18,6 @@ namespace anna
     {
       NextOpType m_next_op;
   
-      // In this base implementation we just forward everything to m_next_op
       inline auto & end() { return m_next_op.end(); }
 
       inline auto & next() { return m_next_op; }
@@ -41,6 +40,25 @@ namespace anna
       }
     };
 
+    template<typename DerivedType, typename T, int InputChannels, int MaxBlockSize, typename NextOpType>
+    struct crtp_with_matrix_input : public crtp<DerivedType, NextOpType>
+    {
+      typedef crtp<DerivedType, NextOpType> crtp_type;
+
+      Eigen::Matrix<T, InputChannels, MaxBlockSize> m_input;
+      int m_input_head;
+
+      crtp_with_matrix_input() : m_input(Eigen::Matrix<float, InputChannels, MaxBlockSize>::Zero()), m_input_head(0) { }
+
+      inline auto & input() { return m_input; }
+
+      inline auto & input_head() { return m_input_head; }
+
+      using crtp_type::next;
+      using crtp_type::end;
+      using crtp_type::set;
+    };
+
     template<typename NextOpType>
     struct tanh : public crtp<tanh<NextOpType>, NextOpType>
     {
@@ -48,9 +66,11 @@ namespace anna
 
       inline void process(const int n)
       {
-        anna::inplace_eigen_fast_tanh(crtp_type::m_next_op.input().middleCols(crtp_type::m_next_op.input_head(), n));
-        crtp_type::m_next_op.process(n);
+        anna::inplace_eigen_fast_tanh(m_next_op.input().middleCols(m_next_op.input_head(), n));
+        m_next_op.process(n);
       }
+
+      using crtp_type::m_next_op;
     };
 
     template<typename T, int OutputChannels, int InputChannels, int KernelSize, int Dilation, int MaxBlockSize, typename NextOpType>
@@ -74,7 +94,7 @@ namespace anna
       }
 
       template<int n, typename ValueType>
-      inline void set(ValueType value)
+      inline void set(const ValueType & value)
       {
         if constexpr (0 == n)
         {
@@ -109,13 +129,18 @@ namespace anna
 
 
     template<typename T, int Channels, int MaxBlockSize, typename NextOpType>
-    struct linear1
+    struct linear1 : public crtp_with_matrix_input<linear1<T, Channels, MaxBlockSize, NextOpType>, T, Channels, MaxBlockSize, NextOpType>
     {
-      Eigen::Matrix<T, Channels, MaxBlockSize> m_input;
+      typedef crtp_with_matrix_input<linear1<T, Channels, MaxBlockSize, NextOpType>, T, Channels, MaxBlockSize, NextOpType> crtp_type;
+
+      using crtp_type::m_input;
+      using crtp_type::m_input_head;
+      using crtp_type::next;
+      using crtp_type::end;
+      using crtp_type::m_next_op;
+  
       Eigen::Matrix<T, Channels, Channels> m_matrix;
-      static const int m_input_head = 0;
     
-      NextOpType m_next_op;
     
       linear1() :
         m_matrix(Eigen::Matrix<T, Channels, Channels>::Zero())
@@ -127,7 +152,7 @@ namespace anna
       }
     
       template<int n, typename ValueType>
-      inline void set(ValueType value)
+      inline void set(const ValueType & value)
       {
         if constexpr (0 == n)
         {
@@ -138,14 +163,6 @@ namespace anna
           m_next_op.template set<n-1>(value);
         }
       }  
-    
-      inline auto & next() { return m_next_op; }
-
-      inline auto & end() { return m_next_op.end(); }
-    
-      inline auto & input() { return m_input; }
-    
-      inline int input_head() { return m_input_head; }
     
       inline void process(const int n)
       {
@@ -173,7 +190,7 @@ namespace anna
       }
     
       template<int n, typename ValueType>
-      inline void set(ValueType value)
+      inline void set(const ValueType & value)
       {
         if constexpr (0 == n)
         {
@@ -208,7 +225,7 @@ namespace anna
       NextOpType m_next_op;
     
       template<int n, typename ValueType>
-      inline void set(ValueType value)
+      inline void set(const ValueType & value)
       {
         if constexpr (0 == n)
         {
@@ -242,7 +259,7 @@ namespace anna
       static const int m_input_head = 0;
     
       template<int n, typename ValueType>
-      inline void set(ValueType value)
+      inline void set(const ValueType & value)
       {
         if constexpr (0 == n)
         {
@@ -275,7 +292,7 @@ namespace anna
       }
     
       template<int n, typename ValueType>
-      inline void set(ValueType value)
+      inline void set(const ValueType & value)
       {
         if constexpr (0 == n)
         {
@@ -314,7 +331,7 @@ namespace anna
       > m_op;
 
       template<int n, typename ValueType>
-      inline void set(ValueType value)
+      inline void set(const ValueType & value)
       {
         if constexpr (0 == n)
         {
