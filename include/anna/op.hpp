@@ -54,50 +54,10 @@ namespace anna
     struct matrix_input
     {
       Eigen::Matrix<T, InputChannels, MaxBlockSize> m_input;
-
       static const int m_input_head = 0;
+
       inline int input_head() { return m_input_head; }
       inline auto & input() { return m_input; }
-    };
-
-    template<typename DerivedType, typename ParametersType>
-    struct parameters
-    {
-      ParametersType m_parameters;
-
-      parameters(const ParametersType & parameters = ParametersType()) : m_parameters(parameters) { }
-
-      template<int n, typename NewParametersType>
-      inline void set(const NewParametersType & parameters) 
-      { 
-        if constexpr (0 == n)
-        {
-          m_parameters = parameters;
-        }
-        else
-        {
-          static_cast<DerivedType*>(this)->m_next_op.template set<n-1>(parameters);
-        }
-      }
-
-      auto const & get() { return m_parameters; }
-    };
-
-    template<typename DerivedType>
-    struct no_parameters
-    {
-      template<int n, typename NewValueType>
-      inline void set(const NewValueType & parameters) 
-      { 
-        if constexpr (0 == n)
-        {
-          ERR("no_parameters has no parameters")
-        }
-        else
-        {
-          static_cast<DerivedType*>(this)->m_next_op.template set<n-1>(parameters);
-        }
-      }
     };
 
     template<typename NextOpType>
@@ -105,13 +65,13 @@ namespace anna
     {
       typedef crtp<tanh<NextOpType>, empty, NextOpType> crtp_type;
 
+      using crtp_type::m_next_op;
+
       inline void process(const int n)
       {
         anna::inplace_eigen_fast_tanh(m_next_op.input().middleCols(m_next_op.input_head(), n));
         m_next_op.process(n);
       }
-
-      using crtp_type::m_next_op;
     };
 
     template<typename T, int Channels, int MaxBlockSize, typename NextOpType>
@@ -161,40 +121,37 @@ namespace anna
     };
    
     template<typename T, int Channels, typename NextOpType>
-    struct vector_add
+    struct vector_add : 
+      public crtp<vector_add<T, Channels, NextOpType>, Eigen::Vector<T, Channels>, NextOpType>
     {
-      Eigen::Vector<T, Channels> m_vector;
-    
-      NextOpType m_next_op;
-    
-      template<int n, typename ValueType>
-      inline void set(const ValueType & value)
-      {
-        if constexpr (0 == n)
-        {
-          m_vector = value;
-        }
-        else
-        {
-          m_next_op.template set<n - 1>(value);
-        }
-      }  
-    
-      inline auto & next() { return m_next_op; }
+      typedef crtp<vector_add<T, Channels, NextOpType>, Eigen::Vector<T, Channels>, NextOpType> crtp_type;
+      using crtp_type::m_next_op;
+      using crtp_type::m_parameters;
+   
+      vector_add() : crtp_type(Eigen::Vector<T, Channels>::Zero()) { }
 
-      inline auto & end() { return m_next_op.end(); }
-    
-      inline auto & input() { return m_next_op.input(); }
-    
-      inline int input_head() { return m_next_op.input_head(); }
-    
       inline void process(const int n)
       {
-        m_next_op.input().middleCols(m_next_op.input_head(), n).colwise() += m_vector;
+        m_next_op.input().middleCols(m_next_op.input_head(), n).colwise() += m_parameters;
         m_next_op.process(n);
       }
     };
     
+    template<typename T, typename NextOpType>
+    struct scalar_multiple : public crtp<scalar_multiple<T, NextOpType>, T, NextOpType>
+    {
+      typedef crtp<scalar_multiple<T, NextOpType>, T, NextOpType> crtp_type;
+
+      using crtp_type::m_next_op;
+      using crtp_type::m_parameters;
+    
+      inline void process(const int n)
+      {
+        m_next_op.input().middleCols(m_next_op.input_head(), n).array() *= m_parameters;
+        m_next_op.process(n);
+      }
+    };
+
     template<typename T, int InputChannels, int MaxBlockSize>
     struct output
     {
@@ -221,47 +178,6 @@ namespace anna
       inline void process(const int n) { /* NO OP */ }
     };
     
-    template<typename T, typename NextOpType>
-    struct scalar_multiple
-    {
-      NextOpType m_next_op;
-    
-      T m_value;
-    
-      scalar_multiple() :
-        m_value(T())
-      {
-    
-      }
-    
-      template<int n, typename ValueType>
-      inline void set(const ValueType & value)
-      {
-        if constexpr (0 == n)
-        {
-          m_value = value;
-        }
-        else
-        {
-          m_next_op.template set<n-1>(value);
-        }
-      }  
-    
-      inline auto & next() { return m_next_op; }
-
-      inline auto & end() { return m_next_op.end(); }
-    
-      inline auto & input() { return m_next_op.input(); }
-    
-      inline int input_head() { return m_next_op.input_head(); }
-    
-      inline void process(const int n)
-      {
-        m_next_op.input().middleCols(m_next_op.input_head(), n).array() *= m_value;
-        m_next_op.process(n);
-      }
-    };
-
     template<typename T, int OutputChannels, int InputChannels, int KernelSize, int Dilation, int MaxBlockSize, typename NextOpType>
     struct conv1d
     {
