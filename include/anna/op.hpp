@@ -137,7 +137,7 @@ namespace anna
       }
     };
 
-    template<typename T, int InputChannels, int OutputChannels, int MaxBlockSize, typename NextOpType>
+    template<typename T, int OutputChannels, int InputChannels, int MaxBlockSize, typename NextOpType>
     struct linear2 : 
       public crtp<linear2<T, InputChannels, OutputChannels, MaxBlockSize, NextOpType>, Eigen::Matrix<T, OutputChannels, InputChannels>, NextOpType>, 
       public matrix_input<T, InputChannels, MaxBlockSize>
