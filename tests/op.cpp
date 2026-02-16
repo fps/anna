@@ -83,5 +83,5 @@ TEST(op, crtp)
   output<float, 16, 64
   >>>> net;
   net.set<2>(Eigen::Matrix<float, 16, 16>::Ones());
-  net.set<1>(1);
+  EXPECT_THROW((net.set<1>(1)), std::runtime_error);
 }

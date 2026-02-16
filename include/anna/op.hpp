@@ -14,15 +14,7 @@ namespace anna
   auto id()
   {
     auto m = Eigen::Matrix<T, Rows, Columns>::Zero().eval();
-
-    for (int row = 0; row < Rows; ++row) 
-    {
-      for (int col = 0; col < Columns; ++col) 
-      {
-        m(row, col) = 1;
-      }
-    }
-
+    m.setIdentity();
     return m;
   }
 
@@ -65,8 +57,8 @@ namespace anna
 
       parameters(const ParametersType & parameters = ParametersType()) : m_parameters(parameters) { }
 
-      template<int n, typename NewValueType>
-      inline void set(const NewValueType & parameters) 
+      template<int n, typename NewParametersType>
+      inline void set(const NewParametersType & parameters) 
       { 
         if constexpr (0 == n)
         {
@@ -77,6 +69,8 @@ namespace anna
           static_cast<DerivedType*>(this)->m_next_op.template set<n-1>(parameters);
         }
       }
+
+      auto const & get() { return m_parameters; }
     };
 
     template<typename DerivedType>
@@ -116,7 +110,7 @@ namespace anna
       public parameters<linear1<T, Channels, MaxBlockSize, NextOpType>, Eigen::Matrix<float, Channels, Channels>>
     {
       typedef linear1<T, Channels, MaxBlockSize, NextOpType> type;
-      typedef crtp_with_matrix_input<linear1<T, Channels, MaxBlockSize, NextOpType>, T, Channels, MaxBlockSize, NextOpType> crtp_type;
+      typedef crtp_with_matrix_input<type, T, Channels, MaxBlockSize, NextOpType> crtp_type;
       typedef parameters<type, Eigen::Matrix<float, Channels, Channels>> parameters_type;
 
       using parameters_type::m_parameters;
@@ -218,7 +212,7 @@ namespace anna
       {
         if constexpr (0 == n)
         {
-          ERR("output has no value to set()")
+          ERR("output has no parameters to set()")
         }
       }  
     
@@ -233,15 +227,15 @@ namespace anna
       inline void process(const int n) { /* NO OP */ }
     };
     
-    template<typename T, int Nominator, int Denominator, typename NextOpType>
+    template<typename T, typename NextOpType>
     struct scalar_multiple
     {
       NextOpType m_next_op;
     
-      T m_value = (T)Nominator/(T)Denominator;
+      T m_value;
     
       scalar_multiple() :
-        m_value((T)Nominator/(T)Denominator)
+        m_value(T())
       {
     
       }

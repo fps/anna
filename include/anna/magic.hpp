@@ -123,7 +123,7 @@ namespace anna
       if (0 != ret)
       {
         // TODO: What to do here? ;)
-        ERR("munmap returned non-null")
+        INFO("munmap returned non-null")
       }
     }
   };
