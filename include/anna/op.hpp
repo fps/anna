@@ -22,7 +22,6 @@ namespace anna
   {
     struct empty { };
 
-    // Curiously Recurring Template Pattern
     template<typename DerivedType, typename ParametersType, typename NextOpType>
     struct chain
     {
@@ -83,7 +82,8 @@ namespace anna
       typedef chain<type, Eigen::Matrix<T, Channels, Channels>, NextOpType> chain_type;
       typedef matrix_input<T, Channels, MaxBlockSize> matrix_input_type;
 
-      using chain_type::m_next_op;
+      // using chain_type::m_next_op;
+      using chain_type::next;
       using chain_type::m_parameters;
       using matrix_input_type::input;
       using matrix_input_type::input_head;
@@ -92,8 +92,8 @@ namespace anna
     
       inline void process(const int n)
       {
-        m_next_op.input().middleCols(m_next_op.input_head(), n).noalias() = m_parameters * input().middleCols(input_head(), n);
-        m_next_op.process(n);
+        next().input().middleCols(next().input_head(), n).noalias() = m_parameters * input().middleCols(input_head(), n);
+        next().process(n);
       }
     };
 
@@ -221,19 +221,18 @@ namespace anna
       }
     };
 
-    template<typename T, int OutputChannels, int InputChannels, int KernelSize, int Dilation, int MaxBlockSize, typename NextOpType>
-    using conv1d_bias_tanh = conv1d<T, OutputChannels, InputChannels, KernelSize, Dilation, MaxBlockSize, vector_add<T, OutputChannels, tanh< NextOpType>>>;
-
-    template<typename T, int OutputChannels, int InputChannels, int KernelSize, int NumDilations, int MaxBlockSize, typename NextOpType>
-    struct dilated_conv1d_bias_tanh { }; 
-
     template<typename OpType, typename InputType>
     static inline void process(OpType & op, Eigen::MatrixBase<InputType> const & input, const int n)
     {
       op.input().middleCols(op.input_head(), n) = input;
       op.process(n);
     }
+
+    template<typename T, int OutputChannels, int InputChannels, int KernelSize, int Dilation, int MaxBlockSize, typename NextOpType>
+    using conv1d_bias_tanh = conv1d<T, OutputChannels, InputChannels, KernelSize, Dilation, MaxBlockSize, vector_add<T, OutputChannels, tanh< NextOpType>>>;
+
+    template<typename T, int OutputChannels, int InputChannels, int KernelSize, int NumDilations, int MaxBlockSize, typename NextOpType>
+    struct dilated_conv1d_bias_tanh { }; 
   }
 }
-
 
