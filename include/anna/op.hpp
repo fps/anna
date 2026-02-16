@@ -20,16 +20,34 @@ namespace anna
 
   namespace op
   {
+    struct empty { };
+
     // Curiously Recurring Template Pattern
-    template<typename DerivedType, typename NextOpType>
+    template<typename DerivedType, typename ParametersType, typename NextOpType>
     struct crtp
     {
+      ParametersType m_parameters;
       NextOpType m_next_op;
   
       inline auto & end() { return m_next_op.end(); }
       inline auto & next() { return m_next_op; }
       inline auto & input() { return m_next_op.input(); }
       inline int input_head() { return m_next_op.input_head(); }
+
+      template<int n, typename NewParametersType>
+      inline void set(const NewParametersType & parameters) 
+      { 
+        if constexpr (0 == n)
+        {
+          m_parameters = parameters;
+        }
+        else
+        {
+          static_cast<DerivedType*>(this)->m_next_op.template set<n-1>(parameters);
+        }
+      }
+
+      crtp(const ParametersType & parameters = ParametersType()) : m_parameters(parameters) { }
     };
 
     template<typename T, int InputChannels, int MaxBlockSize>
@@ -83,9 +101,9 @@ namespace anna
     };
 
     template<typename NextOpType>
-    struct tanh : public crtp<tanh<NextOpType>, NextOpType>, public no_parameters<tanh<NextOpType>>
+    struct tanh : public crtp<tanh<NextOpType>, empty, NextOpType>
     {
-      typedef crtp<tanh<NextOpType>, NextOpType> crtp_type;
+      typedef crtp<tanh<NextOpType>, empty, NextOpType> crtp_type;
 
       inline void process(const int n)
       {
@@ -98,21 +116,19 @@ namespace anna
 
     template<typename T, int Channels, int MaxBlockSize, typename NextOpType>
     struct linear1 : 
-      public crtp<linear1<T, Channels, MaxBlockSize, NextOpType>, NextOpType>, 
-      public parameters<linear1<T, Channels, MaxBlockSize, NextOpType>, Eigen::Matrix<float, Channels, Channels>>,
+      public crtp<linear1<T, Channels, MaxBlockSize, NextOpType>, Eigen::Matrix<T, Channels, Channels>, NextOpType>, 
       public matrix_input<T, Channels, MaxBlockSize>
     {
       typedef linear1<T, Channels, MaxBlockSize, NextOpType> type;
-      typedef crtp<type, NextOpType> crtp_type;
-      typedef parameters<type, Eigen::Matrix<float, Channels, Channels>> parameters_type;
-      typedef matrix_input<float, Channels, MaxBlockSize> matrix_input_type;
+      typedef crtp<type, Eigen::Matrix<T, Channels, Channels>, NextOpType> crtp_type;
+      typedef matrix_input<T, Channels, MaxBlockSize> matrix_input_type;
 
-      using parameters_type::m_parameters;
       using crtp_type::m_next_op;
+      using crtp_type::m_parameters;
       using matrix_input_type::input;
       using matrix_input_type::input_head;
   
-      linear1() : parameters_type(anna::id<T, Channels, Channels>()) { }
+      linear1() : crtp_type(anna::id<T, Channels, Channels>()) { }
     
       inline void process(const int n)
       {
@@ -123,21 +139,19 @@ namespace anna
 
     template<typename T, int InputChannels, int OutputChannels, int MaxBlockSize, typename NextOpType>
     struct linear2 : 
-      public crtp<linear2<T, InputChannels, OutputChannels, MaxBlockSize, NextOpType>, NextOpType>, 
-      public parameters<linear2<T, InputChannels, OutputChannels, MaxBlockSize, NextOpType>, Eigen::Matrix<float, OutputChannels, InputChannels>>,
+      public crtp<linear2<T, InputChannels, OutputChannels, MaxBlockSize, NextOpType>, Eigen::Matrix<T, OutputChannels, InputChannels>, NextOpType>, 
       public matrix_input<T, InputChannels, MaxBlockSize>
     {
       typedef linear2<T, InputChannels, OutputChannels, MaxBlockSize, NextOpType> type;
-      typedef crtp<type, NextOpType> crtp_type;
-      typedef parameters<type, Eigen::Matrix<float, OutputChannels, InputChannels>> parameters_type;
-      typedef matrix_input<float, InputChannels, MaxBlockSize> matrix_input_type;
+      typedef crtp<type, Eigen::Matrix<T, OutputChannels, InputChannels>, NextOpType> crtp_type;
+      typedef matrix_input<T, InputChannels, MaxBlockSize> matrix_input_type;
 
-      using parameters_type::m_parameters;
+      using crtp_type::m_parameters;
       using crtp_type::m_next_op;
       using matrix_input_type::input;
       using matrix_input_type::input_head;
   
-      linear2() : parameters_type(anna::id<T, OutputChannels, InputChannels>()) { }
+      linear2() : crtp_type(anna::id<T, OutputChannels, InputChannels>()) { }
     
       inline void process(const int n)
       {
