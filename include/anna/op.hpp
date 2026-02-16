@@ -27,27 +27,19 @@ namespace anna
       NextOpType m_next_op;
   
       inline auto & end() { return m_next_op.end(); }
-
       inline auto & next() { return m_next_op; }
-
       inline auto & input() { return m_next_op.input(); }
-
       inline int input_head() { return m_next_op.input_head(); }
     };
 
-    template<typename DerivedType, typename T, int InputChannels, int MaxBlockSize, typename NextOpType>
-    struct crtp_with_matrix_input : public crtp<DerivedType, NextOpType>
+    template<typename T, int InputChannels, int MaxBlockSize>
+    struct matrix_input
     {
-      typedef crtp<DerivedType, NextOpType> crtp_type;
-
       Eigen::Matrix<T, InputChannels, MaxBlockSize> m_input;
-      int m_input_head;
 
-      crtp_with_matrix_input() : m_input(Eigen::Matrix<float, InputChannels, MaxBlockSize>::Zero()), m_input_head(0) { }
-
+      static const int m_input_head = 0;
+      inline int input_head() { return m_input_head; }
       inline auto & input() { return m_input; }
-
-      inline auto & input_head() { return m_input_head; }
     };
 
     template<typename DerivedType, typename ParametersType>
@@ -106,66 +98,54 @@ namespace anna
 
     template<typename T, int Channels, int MaxBlockSize, typename NextOpType>
     struct linear1 : 
-      public crtp_with_matrix_input<linear1<T, Channels, MaxBlockSize, NextOpType>, T, Channels, MaxBlockSize, NextOpType>, 
-      public parameters<linear1<T, Channels, MaxBlockSize, NextOpType>, Eigen::Matrix<float, Channels, Channels>>
+      public crtp<linear1<T, Channels, MaxBlockSize, NextOpType>, NextOpType>, 
+      public parameters<linear1<T, Channels, MaxBlockSize, NextOpType>, Eigen::Matrix<float, Channels, Channels>>,
+      public matrix_input<T, Channels, MaxBlockSize>
     {
       typedef linear1<T, Channels, MaxBlockSize, NextOpType> type;
-      typedef crtp_with_matrix_input<type, T, Channels, MaxBlockSize, NextOpType> crtp_type;
+      typedef crtp<type, NextOpType> crtp_type;
       typedef parameters<type, Eigen::Matrix<float, Channels, Channels>> parameters_type;
+      typedef matrix_input<float, Channels, MaxBlockSize> matrix_input_type;
 
       using parameters_type::m_parameters;
-      using crtp_type::m_input;
-      using crtp_type::m_input_head;
       using crtp_type::m_next_op;
+      using matrix_input_type::input;
+      using matrix_input_type::input_head;
   
       linear1() : parameters_type(anna::id<T, Channels, Channels>()) { }
     
       inline void process(const int n)
       {
-        m_next_op.input().middleCols(m_next_op.input_head(), n).noalias() = m_parameters * m_input.middleCols(m_input_head, n);
+        m_next_op.input().middleCols(m_next_op.input_head(), n).noalias() = m_parameters * input().middleCols(input_head(), n);
         m_next_op.process(n);
       }
     };
-    
-    template<typename T, int OutputChannels, int InputChannels, int MaxBlockSize, typename NextOpType>
-    struct linear2
-    {
-      Eigen::Matrix<T, InputChannels, MaxBlockSize> m_input;
-      Eigen::Matrix<T, OutputChannels, InputChannels> m_matrix;
-      static const int m_input_head = 0;
-    
-      NextOpType m_next_op;
-    
-      linear2() : m_matrix(anna::id<T, OutputChannels, InputChannels>()) { }
-    
-      template<int n, typename ValueType>
-      inline void set(const ValueType & value)
-      {
-        if constexpr (0 == n)
-        {
-          m_matrix = value;
-        }
-        else
-        {
-          m_next_op.template set<n - 1>(value);
-        }
-      }  
-    
-      inline auto & next() { return m_next_op; }
 
-      inline auto & end() { return m_next_op.end(); }
-    
-      inline auto & input() { return m_input; }
-    
-      inline int input_head() { return m_input_head; }
+    template<typename T, int InputChannels, int OutputChannels, int MaxBlockSize, typename NextOpType>
+    struct linear2 : 
+      public crtp<linear2<T, InputChannels, OutputChannels, MaxBlockSize, NextOpType>, NextOpType>, 
+      public parameters<linear2<T, InputChannels, OutputChannels, MaxBlockSize, NextOpType>, Eigen::Matrix<float, OutputChannels, InputChannels>>,
+      public matrix_input<T, InputChannels, MaxBlockSize>
+    {
+      typedef linear2<T, InputChannels, OutputChannels, MaxBlockSize, NextOpType> type;
+      typedef crtp<type, NextOpType> crtp_type;
+      typedef parameters<type, Eigen::Matrix<float, OutputChannels, InputChannels>> parameters_type;
+      typedef matrix_input<float, InputChannels, MaxBlockSize> matrix_input_type;
+
+      using parameters_type::m_parameters;
+      using crtp_type::m_next_op;
+      using matrix_input_type::input;
+      using matrix_input_type::input_head;
+  
+      linear2() : parameters_type(anna::id<T, OutputChannels, InputChannels>()) { }
     
       inline void process(const int n)
       {
-        m_next_op.input().middleCols(m_next_op.input_head(), n).noalias() = m_matrix * m_input.middleCols(m_input_head, n);
+        m_next_op.input().middleCols(m_next_op.input_head(), n).noalias() = m_parameters * input().middleCols(input_head(), n);
         m_next_op.process(n);
       }
     };
-    
+   
     template<typename T, int Channels, typename NextOpType>
     struct vector_add
     {
@@ -326,10 +306,7 @@ namespace anna
     using conv1d_bias_tanh = conv1d<T, OutputChannels, InputChannels, KernelSize, Dilation, MaxBlockSize, vector_add<T, OutputChannels, tanh< NextOpType>>>;
 
     template<typename T, int OutputChannels, int InputChannels, int KernelSize, int NumDilations, int MaxBlockSize, typename NextOpType>
-    struct dilated_conv1d_bias_tanh
-    {
-      
-    }; 
+    struct dilated_conv1d_bias_tanh { }; 
 
     template<typename OpType, typename InputType>
     static inline void process(OpType & op, Eigen::MatrixBase<InputType> const & input, const int n)
