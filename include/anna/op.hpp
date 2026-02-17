@@ -168,17 +168,19 @@ namespace anna
     };
     
     template<typename T, int OutputChannels, int InputChannels, int KernelSize, int Dilation, int MaxBlockSize, typename NextOpType>
-    struct conv1d
+    struct conv1d : 
+      public chain<conv1d<T, OutputChannels, InputChannels, KernelSize, Dilation, MaxBlockSize, NextOpType>, std::array<Eigen::Matrix<T, OutputChannels, InputChannels>, KernelSize>, NextOpType>
     {
-      std::array<Eigen::Matrix<T, OutputChannels, InputChannels>, KernelSize> m_weights;
+      typedef chain<conv1d<T, OutputChannels, InputChannels, KernelSize, Dilation, MaxBlockSize, NextOpType>, std::array<Eigen::Matrix<T, OutputChannels, InputChannels>, KernelSize>, NextOpType> chain_type;
+
+      using chain_type::m_next_op;
+      using chain_type::m_parameters;
 
       static const int magic_cols = anna::next_multiple((KernelSize - 1) * Dilation + MaxBlockSize, ANNA_PAGE_SIZE / (InputChannels * sizeof(T)));
       anna::magic_matrix_machine<T, InputChannels, magic_cols> m_magic_matrix_machine;
       Eigen::Map<Eigen::Matrix<T, InputChannels, 2 * magic_cols>> m_input;
 
       int m_input_head;
-
-      NextOpType m_next_op;
 
       conv1d() :
         m_input(m_magic_matrix_machine.get_map()),
@@ -187,31 +189,13 @@ namespace anna
         DBG("magic_cols: " << magic_cols)
       }
 
-      template<int n, typename ValueType>
-      inline void set(const ValueType & value)
-      {
-        if constexpr (0 == n)
-        {
-          m_weights = value;
-        }
-        else
-        {
-          m_next_op.template set<n-1>(value);
-        }
-      }  
-    
-      inline auto & next() { return m_next_op; }
-
-      inline auto & end() { return m_next_op.end(); }
-    
       inline auto & input() { return m_input; }
-    
       inline int input_head() { return m_input_head; }
     
       inline void process(const int n)
       {
         DBG("input_head: " << m_input_head)
-        anna::conv1d(m_weights, Dilation, m_input, m_next_op.input(), n, m_input_head, m_next_op.input_head());
+        anna::conv1d(m_parameters, Dilation, m_input, m_next_op.input(), n, m_input_head, m_next_op.input_head());
         m_input_head += n;
         if (m_input_head % magic_cols >= (KernelSize - 1) * Dilation)
         {
