@@ -16,7 +16,7 @@ void run(benchmark::State & state)
 
   for (auto _ : state)
   {
-    for (int index = 0; index < 4096; ++index)
+    for (int index = 0; index < 750; ++index)
     {
       nam_wavenet->process(input, output, 64);
     }
