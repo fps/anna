@@ -1,4 +1,4 @@
-project('anna', 'cpp', version : '0.1', default_options : [ 'b_ndebug=if-release', 'warning_level=everything' ])
+project('anna', 'cpp', version : '0.1', default_options : [ 'b_ndebug=if-release', 'warning_level=everything','cpp_std=c++20' ])
 
 benchmark_dep = dependency('benchmark')
 gtest_dep = dependency('gtest_main')
