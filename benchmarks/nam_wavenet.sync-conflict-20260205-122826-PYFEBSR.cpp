@@ -4,14 +4,12 @@
 #include <anna/make_matrix_array.hpp>
 
 #include "../examples/nam_wavenet.hpp"
-#include <sys/mman.h>
 
 void run(benchmark::State & state)
 {
   Eigen::Matrix<float, 1, 64> input = Eigen::Matrix<float, 1, 64>::Ones();
   Eigen::Matrix<float, 1, 64> output = Eigen::Matrix<float, 1, 64>::Zero();
-  auto *nam_wavenet = new anna::examples::nam_wavenet<float, 1, 1, 16, 3, 8, 3, 4096>();
-  mlockall(MCL_CURRENT);
+  anna::examples::nam_wavenet<float, 1, 1, 16, 3, 8, 3, 10, 4096> *nam_wavenet = new anna::examples::nam_wavenet<float, 1, 1, 16, 3, 8, 3, 10, 4096>();
 
   for (auto _ : state)
   {

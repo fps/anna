@@ -161,6 +161,15 @@ namespace anna
 
         const_cast<Eigen::MatrixBase<OutputType>&>(output).leftCols(n).array() *= m_head_scale;
       }  
+
+      template<typename ParametersIterator>
+      void set_parameters(ParametersIterator &parameters_iterator, ParametersIterator const & parameters_iterator_end)
+      {
+        if (parameters_iterator != parameters_iterator_end)
+        {
+          throw std::runtime_error("Failed to consume the precise number of parameters");
+        }
+      }
     };
   }
 } 
