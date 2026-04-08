@@ -1,14 +1,12 @@
-#include <anna/nam.hpp>
+#include "nam_wavenet.hpp"
 #include <iostream>
 #include <chrono>
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <sndfile.h>
 
-#define buffer_size 128
+#define buffer_size 64
 #define process_size 64
-// #define bench_nframes (48000*100)
-#define bench_nframes (64 * 4096)
 
 int main(int argc, char *argv[])
 {
@@ -18,41 +16,17 @@ int main(int argc, char *argv[])
     return 1;
   }
   
-  anna::nam::wavenet<
-    float, buffer_size,
-    1, 1,
-    anna::nam::wavenet_block<
-      float, buffer_size, 1, 1, 16, 8, false,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 1, false, true>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 2>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 4>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 8>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 16>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 32>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 64>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 128>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 256>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 16, 512>
-      >,
-    anna::nam::wavenet_block<
-      float, buffer_size, 1, 16, 8, 1, true,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 8, 1>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 8, 2>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 8, 4>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 8, 8>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 8, 16>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 8, 32>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 8, 64>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 8, 128>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 8, 256>,
-      anna::nam::wavenet_layer<float, buffer_size, 3, 1, 8, 512, true>
-      >
-    > model;
+  auto *model = new anna::examples::nam_wavenet<float, 1, 1, 16, 3, 8, 3, buffer_size>();
 
   std::ifstream f(argv[1]);
   nlohmann::json data = nlohmann::json::parse(f);
 
-  model.set_parameters(data["weights"].get<std::vector<float>>());
+  std::vector<float> params = data["weights"].get<std::vector<float>>();
+  auto params_begin = params.begin();
+  auto params_end = params.end();
+  std::cout << "# of weights: " << (params_end - params_begin) << "\n";
+
+  model->set_parameters(params_begin, params_end);
 
   SF_INFO sf_info = { 0 };
   SNDFILE *sndfile = sf_open(argv[2], SFM_READ, &sf_info);
@@ -86,14 +60,10 @@ int main(int argc, char *argv[])
 
   auto tick = std::chrono::high_resolution_clock::now();
 
-  for (size_t run = 0; run < 1; ++run)
-  {
   for (long idx = 0; idx < sf_info.frames/process_size; ++idx) {
     input.template leftCols(process_size) = Eigen::Map<Eigen::Matrix<float, 1, process_size>>(input_file.data() + idx * process_size);
-    model.process(input, process_size);
     Eigen::Map<Eigen::Matrix<float, 1, process_size>> output(output_file.data() + idx * process_size);
-    output = model.get_output().template leftCols(process_size);
-  }
+    model->process(input, output, buffer_size);
   }
   
   /*

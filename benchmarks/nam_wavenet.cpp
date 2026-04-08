@@ -6,18 +6,20 @@
 #include "../examples/nam_wavenet.hpp"
 #include <sys/mman.h>
 
+#define NBLOCKS 750
+
 void run(benchmark::State & state)
 {
-  Eigen::Matrix<float, 1, 64> input = Eigen::Matrix<float, 1, 64>::Ones();
-  Eigen::Matrix<float, 1, 64> output = Eigen::Matrix<float, 1, 64>::Zero();
-  auto *nam_wavenet = new anna::examples::nam_wavenet<float, 1, 1, 16, 3, 8, 3, 4096>();
+  Eigen::Matrix<float, 1, 64 * NBLOCKS> input = Eigen::Matrix<float, 1, 64 * NBLOCKS>::Ones();
+  Eigen::Matrix<float, 1, 64 * NBLOCKS> output = Eigen::Matrix<float, 1, 64 * NBLOCKS>::Zero();
+  auto *nam_wavenet = new anna::examples::nam_wavenet<float, 1, 1, 16, 3, 8, 3, 64>();
   mlockall(MCL_CURRENT);
 
   for (auto _ : state)
   {
-    for (int index = 0; index < 750; ++index)
+    for (int index = 0; index < NBLOCKS; ++index)
     {
-      nam_wavenet->process(input, output, 64);
+      nam_wavenet->process(input.middleCols(index*64, 64), output.middleCols(index*64, 64), 64);
     }
   }
 
