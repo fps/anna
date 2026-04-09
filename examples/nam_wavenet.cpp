@@ -5,7 +5,7 @@
 #include <nlohmann/json.hpp>
 #include <sndfile.h>
 
-#define process_size 128
+#define process_size 256
 #define max_buffer_size 512
 
 int main(int argc, char *argv[])
