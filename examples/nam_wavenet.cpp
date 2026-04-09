@@ -5,8 +5,8 @@
 #include <nlohmann/json.hpp>
 #include <sndfile.h>
 
-#define buffer_size 64
-#define process_size 64
+#define process_size 128
+#define max_buffer_size 512
 
 int main(int argc, char *argv[])
 {
@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     return 1;
   }
   
-  auto *model = new anna::examples::nam_wavenet<float, 1, 1, 16, 3, 8, 3, buffer_size>();
+  auto *model = new anna::examples::nam_wavenet<float, 1, 1, 16, 3, 8, 3, max_buffer_size>();
 
   std::ifstream f(argv[1]);
   nlohmann::json data = nlohmann::json::parse(f);
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 
   std::vector<float> output_file(sf_info.frames, 0);
 
-  Eigen::Matrix<float, 1, buffer_size> input = Eigen::Matrix<float, 1, buffer_size>::Zero();
+  Eigen::Matrix<float, 1, process_size> input = Eigen::Matrix<float, 1, process_size>::Zero();
 
   std::cout << "Processing: " << process_size * (sf_info.frames/process_size) << " samples\n";
 
@@ -63,16 +63,9 @@ int main(int argc, char *argv[])
   for (long idx = 0; idx < sf_info.frames/process_size; ++idx) {
     input.template leftCols(process_size) = Eigen::Map<Eigen::Matrix<float, 1, process_size>>(input_file.data() + idx * process_size);
     Eigen::Map<Eigen::Matrix<float, 1, process_size>> output(output_file.data() + idx * process_size);
-    model->process(input, output, buffer_size);
+    model->process(input, output, process_size);
   }
   
-  /*
-  for (long idx = 0; idx < sf_info.frames/process_size; ++idx) {
-    model.process(input, process_size);
-    // gutput = model.get_output().template leftCols(process_size);
-  }
-  */
-
   auto tock = std::chrono::high_resolution_clock::now();
 
   std::cout << (tock - tick).count() << "\n";

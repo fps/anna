@@ -37,13 +37,20 @@ namespace anna
       Eigen::Matrix<T, Channels, Channels> m_linear_weights;
       Eigen::Vector<T, Channels> m_linear_bias;
 
-      int m_input_head = (KernelSize - 1) * Dilation + MaxBlockSize;
+      int m_input_head;
       static const int m_dilation = Dilation;
+
+      static const int m_max_block_size = MaxBlockSize;
 
       inline void advance_head(const int n)
       {
+        DBG("advance by " << n << ". before: " << m_input_head)
         m_input_head += n;
-        m_input_head = (m_input_head - magic_cols) % magic_cols + magic_cols;
+        if ((m_input_head + m_max_block_size) >= 2 * magic_cols)
+          m_input_head -= magic_cols;
+
+        // m_input_head = (m_input_head + m_max_block_size - magic_cols) % magic_cols + magic_cols - m_max_block_size;
+        DBG("after: " << m_input_head)
       }
 
       nam_wavenet_layer() :
@@ -56,8 +63,11 @@ namespace anna
       template<typename ParametersIterator>
       void set_parameters(ParametersIterator &it)
       {
-        for (size_t k = 0; k < m_dilated_weights.size(); ++k)
-          set_matrix_entries(m_dilated_weights[k], it);
+        for (int row = 0; row < m_dilated_weights[0].rows(); ++row)
+          for (int col = 0; col < m_dilated_weights[0].cols(); ++col)
+            for (size_t k = 0; k < m_dilated_weights.size(); ++k)
+              m_dilated_weights[k](row, col) = *(it++);
+              // m_dilated_weights[m_dilated_weights.size() - k - 1](row, col) = *(it++);
 
         set_matrix_entries(m_dilated_bias, it);
 
@@ -136,7 +146,7 @@ namespace anna
 
         anna::inplace_eigen_fast_tanh(next_layer.m_input.middleCols(next_layer.m_input_head, n));
 
-        next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() += layer.m_linear_weights * layer.m_input.leftCols(n);
+        next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() += layer.m_linear_weights * layer.m_input.middleCols(layer.m_input_head, n);
         next_layer.m_input.middleCols(next_layer.m_input_head, n).colwise() += layer.m_linear_bias;
 
         if (true == first)
@@ -155,6 +165,7 @@ namespace anna
       inline void process(Eigen::MatrixBase<InputType> const & input, Eigen::MatrixBase<OutputType> const & output, const int n)
       {
         DBG("process")
+        DBG("m_layer10.m_input_head, n: " << m_layer10.m_input_head << ", " << n)
         m_layer10.m_input.middleCols(m_layer10.m_input_head, n).noalias() = m_rechannel_weights1 * input.leftCols(n);
 
         process_layer(input, m_head1, m_layer10, m_layer11, true, n);
@@ -170,7 +181,7 @@ namespace anna
        
         m_head2.leftCols(n).noalias() = m_head_rechannels_weights1 * m_head1.leftCols(n);
 
-        m_layer20.m_input.middleCols(m_layer20.m_input_head - n, n).noalias() = m_rechannel_weights2 * m_layer1a.m_input.middleCols(m_layer1a.m_input_head - n, n);
+        m_layer20.m_input.middleCols(m_layer20.m_input_head, n).noalias() = m_rechannel_weights2 * m_layer1a.m_input.middleCols(m_layer1a.m_input_head, n);
 
         process_layer(input, m_head2, m_layer20, m_layer21, false, n);
         process_layer(input, m_head2, m_layer21, m_layer22, false, n);
@@ -221,6 +232,7 @@ namespace anna
         m_layer29.set_parameters(it);
 
         set_matrix_entries(m_head_rechannel_weights2, it);
+        set_matrix_entries(m_head_rechannel_bias2, it);
 
         m_head_scale = *(it++);
         
