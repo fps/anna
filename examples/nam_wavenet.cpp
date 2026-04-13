@@ -5,8 +5,8 @@
 #include <nlohmann/json.hpp>
 #include <sndfile.h>
 
-#define process_size 256
-#define max_buffer_size 512
+#define process_size 64
+#define max_buffer_size 64
 
 int main(int argc, char *argv[])
 {
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
   
   auto tock = std::chrono::high_resolution_clock::now();
 
-  std::cout << (tock - tick).count() << "\n";
+  std::cout << "tock - tick: " << (tock - tick).count() << "\n";
 
   SF_INFO sf_info2;
   sf_info2.channels = 1;

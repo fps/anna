@@ -6,7 +6,7 @@
 #include "../examples/nam_wavenet.hpp"
 #include <sys/mman.h>
 
-#define NBLOCKS 750
+#define NBLOCKS 4096
 
 void run(benchmark::State & state)
 {

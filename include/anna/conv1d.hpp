@@ -15,7 +15,7 @@ namespace anna
     output.middleCols(output_head, n).noalias() = weights[0] * input.middleCols(input_head - ((KernelSize - 1) * dilation), n);
     for (int k = 1; k < KernelSize; ++k)
     {
-      output.middleCols(output_head, n).noalias() += weights[k] * input.middleCols(input_head - ((KernelSize - k - 1) * dilation), n);
+      output.middleCols(output_head, n).noalias() += weights[k] * input.middleCols(input_head - ((KernelSize -  1 - k) * dilation), n);
     }
   }
   

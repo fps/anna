@@ -22,12 +22,14 @@ namespace anna
           m(row, col) = *(it++);
     }
 
-    template<typename T, int InputChannels, int Channels, int KernelSize, int Dilation, int MaxBlockSize>
+    template<typename T, int InputChannels, int Channels, int KernelSize, int Dilation, int MaxBlockSize, bool ZeroHead, bool ApplyLinear>
     struct nam_wavenet_layer
     {
       static const int magic_cols = anna::next_multiple((KernelSize - 1) * Dilation + MaxBlockSize, ANNA_PAGE_SIZE / (Channels * sizeof(T)));
       anna::magic_matrix_machine<T, Channels, magic_cols> m_magic_matrix_machine;
       Eigen::Map<Eigen::Matrix<T, Channels, 2 * magic_cols>> m_input;
+
+      Eigen::Matrix<T, Channels, MaxBlockSize> m_temp;
 
       std::array<Eigen::Matrix<T, Channels, Channels>, KernelSize> m_dilated_weights;
       Eigen::Vector<T, Channels> m_dilated_bias;
@@ -39,14 +41,14 @@ namespace anna
 
       int m_input_head;
       static const int m_dilation = Dilation;
-
-      static const int m_max_block_size = MaxBlockSize;
+      static const bool m_zero_head = ZeroHead;
+      static const bool m_apply_linear = ApplyLinear;
 
       inline void advance_head(const int n)
       {
         DBG("advance by " << n << ". before: " << m_input_head)
         m_input_head += n;
-        if ((m_input_head + m_max_block_size) >= 2 * magic_cols)
+        if ((m_input_head + MaxBlockSize) >= 2 * magic_cols)
           m_input_head -= magic_cols;
 
         // m_input_head = (m_input_head + m_max_block_size - magic_cols) % magic_cols + magic_cols - m_max_block_size;
@@ -65,7 +67,7 @@ namespace anna
       {
         for (int row = 0; row < m_dilated_weights[0].rows(); ++row)
           for (int col = 0; col < m_dilated_weights[0].cols(); ++col)
-            for (size_t k = 0; k < m_dilated_weights.size(); ++k)
+            for (size_t k = 0; k < KernelSize; ++k)
               m_dilated_weights[k](row, col) = *(it++);
               // m_dilated_weights[m_dilated_weights.size() - k - 1](row, col) = *(it++);
 
@@ -96,16 +98,16 @@ namespace anna
       Eigen::Matrix<T, Channels1, InputChannels> m_rechannel_weights1;
       Eigen::Matrix<T, Channels1, MaxBlockSize> m_head1;
 
-      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 0, MaxBlockSize> m_layer10;
-      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 1, MaxBlockSize> m_layer11;
-      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 2, MaxBlockSize> m_layer12;
-      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 3, MaxBlockSize> m_layer13;
-      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 4, MaxBlockSize> m_layer14;
-      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 5, MaxBlockSize> m_layer15;
-      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 6, MaxBlockSize> m_layer16;
-      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 7, MaxBlockSize> m_layer17;
-      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 8, MaxBlockSize> m_layer18;
-      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 9, MaxBlockSize> m_layer19;
+      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 0, MaxBlockSize, true, true> m_layer10;
+      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 1, MaxBlockSize, false, true> m_layer11;
+      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 2, MaxBlockSize, false, true> m_layer12;
+      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 3, MaxBlockSize, false, true> m_layer13;
+      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 4, MaxBlockSize, false, true> m_layer14;
+      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 5, MaxBlockSize, false, true> m_layer15;
+      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 6, MaxBlockSize, false, true> m_layer16;
+      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 7, MaxBlockSize, false, true> m_layer17;
+      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 8, MaxBlockSize, false, true> m_layer18;
+      nam_wavenet_layer<T, InputChannels, Channels1, KernelSize1, 1 << 9, MaxBlockSize, false, true> m_layer19;
       output<T, Channels1, MaxBlockSize> m_layer1a;
  
       Eigen::Matrix<T, Channels2, Channels1> m_head_rechannels_weights1;
@@ -113,16 +115,16 @@ namespace anna
       Eigen::Matrix<T, Channels2, Channels1> m_rechannel_weights2;
       Eigen::Matrix<T, Channels2, MaxBlockSize> m_head2;
       
-      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 0, MaxBlockSize> m_layer20;
-      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 1, MaxBlockSize> m_layer21;
-      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 2, MaxBlockSize> m_layer22;
-      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 3, MaxBlockSize> m_layer23;
-      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 4, MaxBlockSize> m_layer24;
-      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 5, MaxBlockSize> m_layer25;
-      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 6, MaxBlockSize> m_layer26;
-      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 7, MaxBlockSize> m_layer27;
-      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 8, MaxBlockSize> m_layer28;
-      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 9, MaxBlockSize> m_layer29;
+      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 0, MaxBlockSize, false, true> m_layer20;
+      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 1, MaxBlockSize, false, true> m_layer21;
+      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 2, MaxBlockSize, false, true> m_layer22;
+      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 3, MaxBlockSize, false, true> m_layer23;
+      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 4, MaxBlockSize, false, true> m_layer24;
+      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 5, MaxBlockSize, false, true> m_layer25;
+      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 6, MaxBlockSize, false, true> m_layer26;
+      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 7, MaxBlockSize, false, true> m_layer27;
+      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 8, MaxBlockSize, false, true> m_layer28;
+      nam_wavenet_layer<T, InputChannels, Channels2, KernelSize2, 1 << 9, MaxBlockSize, false, false> m_layer29;
       output<T, Channels2, MaxBlockSize> m_layer2a;
 
       Eigen::Matrix<T, OutputChannels, Channels2> m_head_rechannel_weights2;
@@ -136,20 +138,44 @@ namespace anna
       }
 
       template<typename InputType, typename HeadType, typename LayerType, typename NextLayerType>
-      inline void process_layer(Eigen::MatrixBase<InputType> const & input, Eigen::MatrixBase<HeadType> const & const_head, LayerType & layer, NextLayerType & next_layer, const bool first, const int n)
+      inline void process_layer(Eigen::MatrixBase<InputType> const & input, Eigen::MatrixBase<HeadType> const & const_head, LayerType & layer, NextLayerType & next_layer, const int n)
       {
         DBG("process_layer")
         Eigen::MatrixBase<HeadType> &head = const_cast<Eigen::MatrixBase<HeadType>&>(const_head);
+
+        anna::conv1d(layer.m_dilated_weights, layer.m_dilated_bias, layer.m_dilation, layer.m_input, layer.m_temp, n, layer.m_input_head, 0);
+
+        layer.m_temp.leftCols(n).noalias() += layer.m_input_mixer_weights * input.leftCols(n);
+
+        anna::inplace_eigen_fast_tanh(layer.m_temp.leftCols(n));
+        // next_layer.m_input.middleCols(next_layer.m_input_head, n) = next_layer.m_input.middleCols(next_layer.m_input_head, n).array().tanh();
+
+        if constexpr (true == layer.m_zero_head)
+        {
+          head.leftCols(n).noalias() = layer.m_temp.leftCols(n);
+        }
+        else
+        {
+          head.leftCols(n).noalias() += layer.m_temp.leftCols(n); 
+        }
+
+        if constexpr (true == layer.m_apply_linear)
+        {
+          next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() = layer.m_linear_weights * layer.m_temp.leftCols(n);
+          next_layer.m_input.middleCols(next_layer.m_input_head, n).colwise() += layer.m_linear_bias;
+
+          next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() += layer.m_input.middleCols(layer.m_input_head, n);
+        }
+
+#if 0
         anna::conv1d(layer.m_dilated_weights, layer.m_dilated_bias, layer.m_dilation, layer.m_input, next_layer.m_input, n, layer.m_input_head, next_layer.m_input_head);
 
         next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() += layer.m_input_mixer_weights * input.leftCols(n);
 
         anna::inplace_eigen_fast_tanh(next_layer.m_input.middleCols(next_layer.m_input_head, n));
+        // next_layer.m_input.middleCols(next_layer.m_input_head, n) = next_layer.m_input.middleCols(next_layer.m_input_head, n).array().tanh();
 
-        next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() += layer.m_linear_weights * layer.m_input.middleCols(layer.m_input_head, n);
-        next_layer.m_input.middleCols(next_layer.m_input_head, n).colwise() += layer.m_linear_bias;
-
-        if (true == first)
+        if constexpr (true == layer.m_zero_head)
         {
           head.leftCols(n).noalias() = next_layer.m_input.middleCols(next_layer.m_input_head, n);
         }
@@ -158,46 +184,56 @@ namespace anna
           head.leftCols(n).noalias() += next_layer.m_input.middleCols(next_layer.m_input_head, n);
         }
 
+        if constexpr (true == layer.m_apply_linear)
+        {
+          next_layer.m_input.middleCols(next_layer.m_input_head, n) = layer.m_linear_weights * next_layer.m_input.middleCols(next_layer.m_input_head, n);
+          next_layer.m_input.middleCols(next_layer.m_input_head, n).colwise() += layer.m_linear_bias;
+
+          next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() += layer.m_input.middleCols(layer.m_input_head, n);
+        }
+#endif
         layer.advance_head(n);
       }
 
       template<typename InputType, typename OutputType>
-      inline void process(Eigen::MatrixBase<InputType> const & input, Eigen::MatrixBase<OutputType> const & output, const int n)
+      inline void process(Eigen::MatrixBase<InputType> const & input, Eigen::MatrixBase<OutputType> const & const_output, const int n)
       {
         DBG("process")
+        Eigen::MatrixBase<OutputType> & output = const_cast<Eigen::MatrixBase<OutputType>&>(const_output);
+
         DBG("m_layer10.m_input_head, n: " << m_layer10.m_input_head << ", " << n)
         m_layer10.m_input.middleCols(m_layer10.m_input_head, n).noalias() = m_rechannel_weights1 * input.leftCols(n);
 
-        process_layer(input, m_head1, m_layer10, m_layer11, true, n);
-        process_layer(input, m_head1, m_layer11, m_layer12, false, n);
-        process_layer(input, m_head1, m_layer12, m_layer13, false, n);
-        process_layer(input, m_head1, m_layer13, m_layer14, false, n);
-        process_layer(input, m_head1, m_layer14, m_layer15, false, n);
-        process_layer(input, m_head1, m_layer15, m_layer16, false, n);
-        process_layer(input, m_head1, m_layer16, m_layer17, false, n);
-        process_layer(input, m_head1, m_layer17, m_layer18, false, n);
-        process_layer(input, m_head1, m_layer18, m_layer19, false, n);
-        process_layer(input, m_head1, m_layer19, m_layer1a, false, n);
+        process_layer(input, m_head1, m_layer10, m_layer11, n);
+        process_layer(input, m_head1, m_layer11, m_layer12, n);
+        process_layer(input, m_head1, m_layer12, m_layer13, n);
+        process_layer(input, m_head1, m_layer13, m_layer14, n);
+        process_layer(input, m_head1, m_layer14, m_layer15, n);
+        process_layer(input, m_head1, m_layer15, m_layer16, n);
+        process_layer(input, m_head1, m_layer16, m_layer17, n);
+        process_layer(input, m_head1, m_layer17, m_layer18, n);
+        process_layer(input, m_head1, m_layer18, m_layer19, n);
+        process_layer(input, m_head1, m_layer19, m_layer1a, n);
        
         m_head2.leftCols(n).noalias() = m_head_rechannels_weights1 * m_head1.leftCols(n);
 
-        m_layer20.m_input.middleCols(m_layer20.m_input_head, n).noalias() = m_rechannel_weights2 * m_layer1a.m_input.middleCols(m_layer1a.m_input_head, n);
+        m_layer20.m_input.middleCols(m_layer20.m_input_head, n).noalias() = m_rechannel_weights2 * m_layer1a.m_input.leftCols(n);
 
-        process_layer(input, m_head2, m_layer20, m_layer21, false, n);
-        process_layer(input, m_head2, m_layer21, m_layer22, false, n);
-        process_layer(input, m_head2, m_layer22, m_layer23, false, n);
-        process_layer(input, m_head2, m_layer23, m_layer24, false, n);
-        process_layer(input, m_head2, m_layer24, m_layer25, false, n);
-        process_layer(input, m_head2, m_layer25, m_layer26, false, n);
-        process_layer(input, m_head2, m_layer26, m_layer27, false, n);
-        process_layer(input, m_head2, m_layer27, m_layer28, false, n);
-        process_layer(input, m_head2, m_layer28, m_layer29, false, n);
-        process_layer(input, m_head2, m_layer29, m_layer2a, false, n);
+        process_layer(input, m_head2, m_layer20, m_layer21, n);
+        process_layer(input, m_head2, m_layer21, m_layer22, n);
+        process_layer(input, m_head2, m_layer22, m_layer23, n);
+        process_layer(input, m_head2, m_layer23, m_layer24, n);
+        process_layer(input, m_head2, m_layer24, m_layer25, n);
+        process_layer(input, m_head2, m_layer25, m_layer26, n);
+        process_layer(input, m_head2, m_layer26, m_layer27, n);
+        process_layer(input, m_head2, m_layer27, m_layer28, n);
+        process_layer(input, m_head2, m_layer28, m_layer29, n);
+        process_layer(input, m_head2, m_layer29, m_layer2a, n);
 
-        const_cast<Eigen::MatrixBase<OutputType>&>(output).leftCols(n).noalias() = m_head_rechannel_weights2 * m_head2.leftCols(n);
-        const_cast<Eigen::MatrixBase<OutputType>&>(output).leftCols(n).colwise() += m_head_rechannel_bias2;
+        output.leftCols(n).noalias() = m_head_rechannel_weights2 * m_head2.leftCols(n);
+        output.leftCols(n).colwise() += m_head_rechannel_bias2;
 
-        const_cast<Eigen::MatrixBase<OutputType>&>(output).leftCols(n).array() *= m_head_scale;
+        output.leftCols(n).array() *= m_head_scale;
       }  
 
       template<typename ParametersIterator, typename ParametersIteratorEnd>
