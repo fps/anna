@@ -22,7 +22,7 @@ namespace anna
           m(row, col) = *(it++);
     }
 
-    template<typename T, int InputChannels, int Channels, int KernelSize, int Dilation, int MaxBlockSize, bool ZeroHead, bool ApplyLinear>
+    template<typename T, int InputChannels, int Channels, int KernelSize, int Dilation, int MaxBlockSize, bool ZeroHead, bool ApplyLinearAndResidual>
     struct nam_wavenet_layer
     {
       static const int magic_cols = anna::next_multiple((KernelSize - 1) * Dilation + MaxBlockSize, ANNA_PAGE_SIZE / (Channels * sizeof(T)));
@@ -42,7 +42,7 @@ namespace anna
       int m_input_head;
       static const int m_dilation = Dilation;
       static const bool m_zero_head = ZeroHead;
-      static const bool m_apply_linear = ApplyLinear;
+      static const bool m_apply_linear_and_residual = ApplyLinearAndResidual;
 
       inline void advance_head(const int n)
       {
@@ -159,7 +159,7 @@ namespace anna
           head.leftCols(n).noalias() += layer.m_temp.leftCols(n); 
         }
 
-        if constexpr (true == layer.m_apply_linear)
+        if constexpr (true == layer.m_apply_linear_and_residual)
         {
           next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() = layer.m_linear_weights * layer.m_temp.leftCols(n);
           next_layer.m_input.middleCols(next_layer.m_input_head, n).colwise() += layer.m_linear_bias;
