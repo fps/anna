@@ -7,25 +7,33 @@
 #include <sys/mman.h>
 
 #define NBLOCKS 4096
+// #define NBLOCKS 750
 
+
+template<int BlockSize, int NumberOfBlocks>
 void run(benchmark::State & state)
 {
-  Eigen::Matrix<float, 1, 64 * NBLOCKS> input = Eigen::Matrix<float, 1, 64 * NBLOCKS>::Ones();
-  Eigen::Matrix<float, 1, 64 * NBLOCKS> output = Eigen::Matrix<float, 1, 64 * NBLOCKS>::Zero();
-  auto *nam_wavenet = new anna::examples::nam_wavenet<float, 1, 1, 16, 3, 8, 3, 64>();
+  std::vector<float> input(BlockSize * NumberOfBlocks, 1.0f);
+  std::vector<float> output(BlockSize * NumberOfBlocks, 0.0f);
+
+  auto *nam_wavenet = new anna::examples::nam_wavenet<float, 1, 1, 16, 3, 8, 3, BlockSize>();
   mlockall(MCL_CURRENT);
 
   for (auto _ : state)
   {
-    for (int index = 0; index < NBLOCKS; ++index)
+    for (int index = 0; index < NumberOfBlocks; ++index)
     {
-      nam_wavenet->process(input.middleCols(index*64, 64), output.middleCols(index*64, 64), 64);
+      Eigen::Map<Eigen::Matrix<float, 1, BlockSize>> map_in(input.data() + BlockSize * index);
+      Eigen::Map<Eigen::Matrix<float, 1, BlockSize>> map_out(output.data() + BlockSize * index);
+
+      nam_wavenet->process(map_in, map_out, BlockSize);
     }
   }
 
   delete nam_wavenet;
 }
 
-BENCHMARK(run);
+BENCHMARK(run<64, 750>);
+BENCHMARK(run<64, 4096>);
 
 BENCHMARK_MAIN();

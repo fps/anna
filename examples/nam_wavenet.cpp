@@ -68,7 +68,10 @@ int main(int argc, char *argv[])
   
   auto tock = std::chrono::high_resolution_clock::now();
 
-  std::cout << "tock - tick: " << (tock - tick).count() << "\n";
+  float duration = std::chrono::duration_cast<std::chrono::duration<float>>(tock - tick).count();
+
+  std::cout << "Elapsed: " << duration << " s\n";
+  std::cout << "Elapsed per second of audio: " << sf_info.samplerate * duration / ((double)process_size * (sf_info.frames/process_size)) << "\n";
 
   SF_INFO sf_info2;
   sf_info2.channels = 1;
