@@ -7,6 +7,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - run: sudo apt install meson ninja-build libeigen3-dev
-      - run: meson configure build
+      - run: meson setup build
       - run: meson compile -vC build
       - run: meson test -vC build
