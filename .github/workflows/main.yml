@@ -6,4 +6,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: install
-        run: sudo apt install meson ninja libeigen3-dev
+        run: sudo apt install meson ninja-build libeigen3-dev
