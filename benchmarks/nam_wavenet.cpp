@@ -33,6 +33,7 @@ void run(benchmark::State & state)
   delete nam_wavenet;
 }
 
+BENCHMARK(run<64, 4096>);
 BENCHMARK(run<64, 750>);
 BENCHMARK(run<64, 4096>);
 

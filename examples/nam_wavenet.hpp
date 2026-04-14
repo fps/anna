@@ -167,31 +167,6 @@ namespace anna
           next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() += layer.m_input.middleCols(layer.m_input_head, n);
         }
 
-#if 0
-        anna::conv1d(layer.m_dilated_weights, layer.m_dilated_bias, layer.m_dilation, layer.m_input, next_layer.m_input, n, layer.m_input_head, next_layer.m_input_head);
-
-        next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() += layer.m_input_mixer_weights * input.leftCols(n);
-
-        anna::inplace_eigen_fast_tanh(next_layer.m_input.middleCols(next_layer.m_input_head, n));
-        // next_layer.m_input.middleCols(next_layer.m_input_head, n) = next_layer.m_input.middleCols(next_layer.m_input_head, n).array().tanh();
-
-        if constexpr (true == layer.m_zero_head)
-        {
-          head.leftCols(n).noalias() = next_layer.m_input.middleCols(next_layer.m_input_head, n);
-        }
-        else
-        {
-          head.leftCols(n).noalias() += next_layer.m_input.middleCols(next_layer.m_input_head, n);
-        }
-
-        if constexpr (true == layer.m_apply_linear)
-        {
-          next_layer.m_input.middleCols(next_layer.m_input_head, n) = layer.m_linear_weights * next_layer.m_input.middleCols(next_layer.m_input_head, n);
-          next_layer.m_input.middleCols(next_layer.m_input_head, n).colwise() += layer.m_linear_bias;
-
-          next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() += layer.m_input.middleCols(layer.m_input_head, n);
-        }
-#endif
         layer.advance_head(n);
       }
 
