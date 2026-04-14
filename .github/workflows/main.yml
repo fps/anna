@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - run: sudo apt install meson ninja-build libeigen3-dev pkg-config libsndfile-dev libgtest-dev libbenchmark-dev
+      - run: sudo apt install meson ninja-build libeigen3-dev pkg-config libsndfile-dev libgtest-dev libbenchmark-dev nlohmann-json3-dev
       - run: meson setup build
       - run: meson compile -vC build
       - run: meson test -vC build
