@@ -1,0 +1,9 @@
+on: 
+  push
+
+jobs:
+  pushed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: install
+        run: apt install meson ninja libeigen3-dev
