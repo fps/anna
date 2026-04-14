@@ -5,5 +5,8 @@ jobs:
   pushed:
     runs-on: ubuntu-latest
     steps:
-      - name: install
-        run: sudo apt install meson ninja-build libeigen3-dev
+      - uses: actions/checkout@v5
+      - run: sudo apt install meson ninja-build libeigen3-dev
+      - run: meson configure build
+      - run: meson compile -vC build
+      - run: meson test -vC build
