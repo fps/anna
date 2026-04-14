@@ -22,11 +22,10 @@ int main(int argc, char *argv[])
   nlohmann::json data = nlohmann::json::parse(f);
 
   std::vector<float> params = data["weights"].get<std::vector<float>>();
-  auto params_begin = params.begin();
-  auto params_end = params.end();
-  std::cout << "# of weights: " << (params_end - params_begin) << "\n";
+  std::cout << "# of weights: " <<  params.size() << "\n";
 
-  model->set_parameters(params_begin, params_end);
+  size_t idx = 0;
+  model->set_parameters(params, idx);
 
   SF_INFO sf_info = { 0 };
   SNDFILE *sndfile = sf_open(argv[2], SFM_READ, &sf_info);

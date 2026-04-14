@@ -13,13 +13,13 @@ namespace anna
 {
   namespace examples
   {
-    template<typename MatrixType, typename ParametersIterator>
-    void set_matrix_entries(Eigen::MatrixBase<MatrixType> const & const_m, ParametersIterator & it)
+    template<typename MatrixType, typename ParametersContainer>
+    void set_matrix_entries(Eigen::MatrixBase<MatrixType> const & const_m, ParametersContainer const & parameters_container, size_t & idx)
     {
       Eigen::MatrixBase<MatrixType> & m = const_cast<Eigen::MatrixBase<MatrixType>&>(const_m);
       for (int row = 0; row < m.rows(); ++row)
         for (int col = 0; col < m.cols(); ++col)
-          m(row, col) = *(it++);
+          m(row, col) = parameters_container.at(idx++);
     }
 
     template<typename T, int InputChannels, int Channels, int KernelSize, int Dilation, int MaxBlockSize, bool ZeroHead, bool ApplyLinearAndResidual>
@@ -62,21 +62,20 @@ namespace anna
         DBG("Channels: " << Channels << ". Dilation: " << Dilation << ", magic_cols: " << magic_cols << ", pages: " << ((m_input.rows() * m_input.cols() * sizeof(T)) / ANNA_PAGE_SIZE))
       }
 
-      template<typename ParametersIterator>
-      void set_parameters(ParametersIterator &it)
+      template<typename ParametersContainer>
+      void set_parameters(ParametersContainer const & parameters_container, size_t & idx)
       {
         for (int row = 0; row < m_dilated_weights[0].rows(); ++row)
           for (int col = 0; col < m_dilated_weights[0].cols(); ++col)
             for (size_t k = 0; k < KernelSize; ++k)
-              m_dilated_weights[k](row, col) = *(it++);
-              // m_dilated_weights[m_dilated_weights.size() - k - 1](row, col) = *(it++);
+              m_dilated_weights[k](row, col) = parameters_container.at(idx++);
 
-        set_matrix_entries(m_dilated_bias, it);
+        set_matrix_entries(m_dilated_bias, parameters_container, idx);
 
-        set_matrix_entries(m_input_mixer_weights, it);
+        set_matrix_entries(m_input_mixer_weights, parameters_container, idx);
 
-        set_matrix_entries(m_linear_weights, it);
-        set_matrix_entries(m_linear_bias, it);
+        set_matrix_entries(m_linear_weights, parameters_container, idx);
+        set_matrix_entries(m_linear_bias, parameters_container, idx);
       }   
     };
 
@@ -211,46 +210,46 @@ namespace anna
         output.leftCols(n).array() *= m_head_scale;
       }  
 
-      template<typename ParametersIterator, typename ParametersIteratorEnd>
-      void set_parameters(ParametersIterator &it, ParametersIteratorEnd & it_end)
+      template<typename ParametersContainer>
+      void set_parameters(ParametersContainer const & parameters_container, size_t & idx)
       {
-        set_matrix_entries(m_rechannel_weights1, it);
+        set_matrix_entries(m_rechannel_weights1, parameters_container, idx);
 
-        m_layer10.set_parameters(it);
-        m_layer11.set_parameters(it);
-        m_layer12.set_parameters(it);
-        m_layer13.set_parameters(it);
-        m_layer14.set_parameters(it);
-        m_layer15.set_parameters(it);
-        m_layer16.set_parameters(it);
-        m_layer17.set_parameters(it);
-        m_layer18.set_parameters(it);
-        m_layer19.set_parameters(it);
+        m_layer10.set_parameters(parameters_container, idx);
+        m_layer11.set_parameters(parameters_container, idx);
+        m_layer12.set_parameters(parameters_container, idx);
+        m_layer13.set_parameters(parameters_container, idx);
+        m_layer14.set_parameters(parameters_container, idx);
+        m_layer15.set_parameters(parameters_container, idx);
+        m_layer16.set_parameters(parameters_container, idx);
+        m_layer17.set_parameters(parameters_container, idx);
+        m_layer18.set_parameters(parameters_container, idx);
+        m_layer19.set_parameters(parameters_container, idx);
 
-        set_matrix_entries(m_head_rechannels_weights1, it);
+        set_matrix_entries(m_head_rechannels_weights1, parameters_container, idx);
 
-        set_matrix_entries(m_rechannel_weights2, it);
+        set_matrix_entries(m_rechannel_weights2, parameters_container, idx);
 
-        m_layer20.set_parameters(it);
-        m_layer21.set_parameters(it);
-        m_layer22.set_parameters(it);
-        m_layer23.set_parameters(it);
-        m_layer24.set_parameters(it);
-        m_layer25.set_parameters(it);
-        m_layer26.set_parameters(it);
-        m_layer27.set_parameters(it);
-        m_layer28.set_parameters(it);
-        m_layer29.set_parameters(it);
+        m_layer20.set_parameters(parameters_container, idx);
+        m_layer21.set_parameters(parameters_container, idx);
+        m_layer22.set_parameters(parameters_container, idx);
+        m_layer23.set_parameters(parameters_container, idx);
+        m_layer24.set_parameters(parameters_container, idx);
+        m_layer25.set_parameters(parameters_container, idx);
+        m_layer26.set_parameters(parameters_container, idx);
+        m_layer27.set_parameters(parameters_container, idx);
+        m_layer28.set_parameters(parameters_container, idx);
+        m_layer29.set_parameters(parameters_container, idx);
 
-        set_matrix_entries(m_head_rechannel_weights2, it);
-        set_matrix_entries(m_head_rechannel_bias2, it);
+        set_matrix_entries(m_head_rechannel_weights2, parameters_container, idx);
+        set_matrix_entries(m_head_rechannel_bias2, parameters_container, idx);
 
-        m_head_scale = *(it++);
+        m_head_scale = parameters_container.at(idx++);
         
-        if (it != it_end)
+        if (idx != parameters_container.size())
         {
           std::stringstream str;
-          str << "Failed to consume the precise number of parameters: " << (it_end - it) << " remaining.";
+          str << "Failed to consume the precise number of parameters: " << (idx - parameters_container.size()) << " remaining.";
           throw std::runtime_error(str.str());
         }
       }
