@@ -27,6 +27,12 @@ int main(int argc, char *argv[])
   size_t idx = 0;
   model->set_parameters(params, idx);
 
+  Eigen::Matrix<float, 1, 64> zero_input = Eigen::Matrix<float, 1, 64>::Zero();
+  Eigen::Matrix<float, 1, 64> zero_output;
+
+  for (int index = 0; index < 128; ++index)
+    model->process(zero_input, zero_output, 64);
+
   SF_INFO sf_info = { 0 };
   SNDFILE *sndfile = sf_open(argv[2], SFM_READ, &sf_info);
   if (nullptr == sndfile)
