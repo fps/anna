@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
   auto tick = std::chrono::high_resolution_clock::now();
 
   for (long idx = 0; idx < sf_info.frames/process_size; ++idx) {
-    input.template leftCols(process_size) = Eigen::Map<Eigen::Matrix<float, 1, process_size>>(input_file.data() + idx * process_size);
+    input.template leftCols<>(process_size) = Eigen::Map<Eigen::Matrix<float, 1, process_size>>(input_file.data() + idx * process_size);
     Eigen::Map<Eigen::Matrix<float, 1, process_size>> output(output_file.data() + idx * process_size);
     model->process(input, output, process_size);
   }

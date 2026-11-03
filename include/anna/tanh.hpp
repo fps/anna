@@ -42,7 +42,7 @@ namespace anna
     template<typename Matrix>
     inline void process(const Eigen::MatrixBase<Matrix> &input, const int n)
     {
-      m_output.template leftCols(n) = eigen_fast_tanh(input.template leftCols(n));
+      m_output.template leftCols<>(n) = eigen_fast_tanh(input.template leftCols<>(n));
     }
   };
 

@@ -41,7 +41,7 @@ namespace anna
 
       int m_input_head;
       static const int m_dilation = Dilation;
-      static const bool m_zero_head = ZeroHead;
+      static constexpr bool m_zero_head = ZeroHead;
       static const bool m_apply_linear_and_residual = ApplyLinearAndResidual;
 
       inline void advance_head(const int n)
@@ -149,7 +149,7 @@ namespace anna
         anna::inplace_eigen_fast_tanh(layer.m_temp.leftCols(n));
         // next_layer.m_input.middleCols(next_layer.m_input_head, n) = next_layer.m_input.middleCols(next_layer.m_input_head, n).array().tanh();
 
-        if constexpr (true == layer.m_zero_head)
+        if (layer.m_zero_head)
         {
           head.leftCols(n).noalias() = layer.m_temp.leftCols(n);
         }
@@ -158,7 +158,7 @@ namespace anna
           head.leftCols(n).noalias() += layer.m_temp.leftCols(n); 
         }
 
-        if constexpr (true == layer.m_apply_linear_and_residual)
+        if (true == layer.m_apply_linear_and_residual)
         {
           next_layer.m_input.middleCols(next_layer.m_input_head, n).noalias() = layer.m_linear_weights * layer.m_temp.leftCols(n);
           next_layer.m_input.middleCols(next_layer.m_input_head, n).colwise() += layer.m_linear_bias;
