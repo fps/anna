@@ -104,8 +104,12 @@ namespace anna
 
       inline void process(const int n)
       {
+        const int op_head = m_op.end().input_head();
+
         m_op.process(n);
-        next().input().middleCols(next().input_head(), n).noalias() = m_op.input().middleCols(m_op.input_head(), n) + m_op.end().input().middleCols(m_op.end().input_head(), n);
+
+        next().input().middleCols(next().input_head(), n).noalias() = m_op.input().middleCols(m_op.input_head(), n) + m_op.end().input().middleCols(op_head, n);
+
         next().process(n);
       }
     };
@@ -291,8 +295,6 @@ namespace anna
           anna::conv1d(m_parameters, Dilation, m_input2, m_next_op.input(), n, m_input_head2, m_next_op.input_head());
         }
         
-        anna::conv1d(m_parameters, Dilation, m_input1, m_next_op.input(), n, m_input_head1, m_next_op.input_head());
-
         advance_head(m_input_head1, n);
         advance_head(m_input_head2, n);
         
