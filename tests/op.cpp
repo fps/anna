@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
-#include <anna/op.hpp>
+
+#include <anna/op/op.hpp>
+#include <anna/op/conv1d.hpp>
 
 using namespace anna::op;
 

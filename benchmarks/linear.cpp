@@ -2,7 +2,7 @@
 #include <anna/log.hpp>
 #include <Eigen/Core>
 
-#include <anna/op.hpp>
+#include <anna/op/op.hpp>
 
 using namespace anna::op;
 
