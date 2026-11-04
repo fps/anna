@@ -7,6 +7,8 @@
 
 #include <Eigen/Core>
 
+#include <algorithm>
+
 namespace anna
 {
   template<typename T, int Rows, int Columns>
@@ -75,19 +77,19 @@ namespace anna
     template<typename T>
     T leaky_relu_func(T x)
     {
-      return std::max(0.01 * x, x);
+      return std::max((T)0.01 * x, x);
     }
     
     template<typename T, typename NextOpType>
     struct leaky_relu : public chain<leaky_relu<T, NextOpType>, empty, NextOpType>
     {
-      typedef chain<tanh<NextOpType>, empty, NextOpType> chain_type;
+      typedef chain<leaky_relu<T, NextOpType>, empty, NextOpType> chain_type;
 
       using chain_type::next;
 
       inline void process(const int n)
       {
-        next().middleCols(next().input_head(), n) = next().middleCols(next().input_head(), n).unaryExpr(&leaky_relu_func<T>);
+        next().input().middleCols(next().input_head(), n) = next().input().middleCols(next().input_head(), n).unaryExpr(&leaky_relu_func<T>);
       }
     };
 
