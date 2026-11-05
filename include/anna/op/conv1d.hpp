@@ -24,19 +24,24 @@ namespace anna
       int m_input_head2;
       
       conv1d() :
-        // m_input(m_magic_matrix_machine.get_map()),
+        m_input1(Eigen::Matrix<T, InputChannels, buffer_size>::Zero()),
         m_input_head1(receptive_field_size),
+        m_input2(Eigen::Matrix<T, InputChannels, buffer_size>::Zero()),
         m_input_head2(0)
-      {
-        // DBG("magic_buffer_size: " << magic_buffer_size)
-      }
+      { }
     
       inline auto & input() { return m_input1; }
       inline int input_head() { return m_input_head1; }
 
-      inline void advance_head(int & head, const int n)
+      inline void advance_head(int & head, const int n, Eigen::Matrix<T, InputChannels, buffer_size> & input)
       {
         head += n;
+        const int overshoot = head - (2 * receptive_field_size);
+
+        if (overshoot > 0)  {
+          input.middleCols(0, overshoot) = input.middleCols(2 * receptive_field_size, overshoot);
+        }
+        
         head %= (2 * receptive_field_size);
       }
       
@@ -52,13 +57,13 @@ namespace anna
           anna::conv1d(m_parameters, Dilation, m_input2, m_next_op.input(), n, m_input_head2, m_next_op.input_head());
         }
         
-        advance_head(m_input_head1, n);
-        advance_head(m_input_head2, n);
+        advance_head(m_input_head1, n, m_input1);
+        advance_head(m_input_head2, n, m_input2);
         
         m_next_op.process(n);
       }
     };
-    
+
     template<typename T, int OutputChannels, int InputChannels, int KernelSize, int Dilation, int MaxBlockSize, typename NextOpType>
     using conv1d_bias_tanh = conv1d<T, OutputChannels, InputChannels, KernelSize, Dilation, MaxBlockSize, vector_add<T, OutputChannels, tanh<NextOpType>>>;
 

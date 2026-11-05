@@ -29,10 +29,10 @@ namespace anna
       ParametersType m_parameters;
       NextOpType m_next_op;
   
-      inline auto & end() { return m_next_op.end(); }
+      inline auto & end() { return next().end(); }
       inline auto & next() { return m_next_op; }
-      inline auto & input() { return m_next_op.input(); }
-      inline int input_head() { return m_next_op.input_head(); }
+      inline auto & input() { return next().input(); }
+      inline int input_head() { return next().input_head(); }
 
       template<int n, typename NewParametersType>
       inline void set(const NewParametersType & parameters) 
@@ -43,7 +43,7 @@ namespace anna
           }
         else
           {
-            static_cast<DerivedType*>(this)->m_next_op.template set<n-1>(parameters);
+            static_cast<DerivedType*>(this)->next().template set<n-1>(parameters);
           }
       }
 
@@ -81,7 +81,8 @@ namespace anna
     }
     
     template<typename T, typename NextOpType>
-    struct leaky_relu : public chain<leaky_relu<T, NextOpType>, empty, NextOpType>
+    struct leaky_relu :
+      public chain<leaky_relu<T, NextOpType>, empty, NextOpType>
     {
       typedef chain<leaky_relu<T, NextOpType>, empty, NextOpType> chain_type;
 
@@ -90,6 +91,7 @@ namespace anna
       inline void process(const int n)
       {
         next().input().middleCols(next().input_head(), n) = next().input().middleCols(next().input_head(), n).unaryExpr(&leaky_relu_func<T>);
+        next().process(n);
       }
     };
 
@@ -100,16 +102,18 @@ namespace anna
       using chain<additive_shortcut<T, OpType, NextOpType>, empty, NextOpType>::next;
       
       OpType m_op;
-      inline auto & input() { return m_op.input(); }
-      inline int input_head() { return m_op.input_head(); }
+      inline auto & input() { return next().input(); }
+      inline int input_head() { return next().input_head(); }
 
       inline void process(const int n)
       {
+        m_op.input().middleCols(m_op.input_head(), n).noalias() = next().input().middleCols(next().input_head(), n);
+
         const int op_head = m_op.end().input_head();
 
         m_op.process(n);
 
-        next().input().middleCols(next().input_head(), n).noalias() = m_op.input().middleCols(m_op.input_head(), n) + m_op.end().input().middleCols(op_head, n);
+        next().input().middleCols(next().input_head(), n).noalias() += m_op.end().input().middleCols(op_head, n);
 
         next().process(n);
       }
@@ -141,15 +145,15 @@ namespace anna
 
     template<typename T, int OutputChannels, int InputChannels, int MaxBlockSize, typename NextOpType>
     struct linear2 : 
-      public chain<linear2<T, InputChannels, OutputChannels, MaxBlockSize, NextOpType>, Eigen::Matrix<T, OutputChannels, InputChannels>, NextOpType>, 
+      public chain<linear2<T, OutputChannels, InputChannels, MaxBlockSize, NextOpType>, Eigen::Matrix<T, OutputChannels, InputChannels>, NextOpType>, 
       public matrix_input<T, InputChannels, MaxBlockSize>
     {
-      typedef linear2<T, InputChannels, OutputChannels, MaxBlockSize, NextOpType> type;
+      typedef linear2<T, OutputChannels, InputChannels, MaxBlockSize, NextOpType> type;
       typedef chain<type, Eigen::Matrix<T, OutputChannels, InputChannels>, NextOpType> chain_type;
       typedef matrix_input<T, InputChannels, MaxBlockSize> matrix_input_type;
 
       using chain_type::m_parameters;
-      using chain_type::m_next_op;
+      using chain_type::next;
       using matrix_input_type::input;
       using matrix_input_type::input_head;
   
@@ -157,8 +161,8 @@ namespace anna
     
       inline void process(const int n)
       {
-        m_next_op.input().middleCols(m_next_op.input_head(), n).noalias() = m_parameters * input().middleCols(input_head(), n);
-        m_next_op.process(n);
+        next().input().middleCols(next().input_head(), n).noalias() = m_parameters * input().middleCols(input_head(), n);
+        next().process(n);
       }
     };
    
@@ -168,15 +172,15 @@ namespace anna
     {
       typedef chain<vector_add<T, Channels, NextOpType>, Eigen::Vector<T, Channels>, NextOpType> chain_type;
 
-      using chain_type::m_next_op;
+      using chain_type::next;
       using chain_type::m_parameters;
    
       vector_add() : chain_type(Eigen::Vector<T, Channels>::Zero()) { }
 
       inline void process(const int n)
       {
-        m_next_op.input().middleCols(m_next_op.input_head(), n).colwise() += m_parameters;
-        m_next_op.process(n);
+        next().input().middleCols(next().input_head(), n).colwise() += m_parameters;
+        next().process(n);
       }
     };
     
@@ -186,13 +190,13 @@ namespace anna
     {
       typedef chain<scalar_multiple<T, NextOpType>, T, NextOpType> chain_type;
 
-      using chain_type::m_next_op;
+      using chain_type::next;
       using chain_type::m_parameters;
     
       inline void process(const int n)
       {
-        m_next_op.input().middleCols(m_next_op.input_head(), n).array() *= m_parameters;
-        m_next_op.process(n);
+        next().input().middleCols(next().input_head(), n).array() *= m_parameters;
+        next().process(n);
       }
     };
 
